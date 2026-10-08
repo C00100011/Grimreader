@@ -1,0 +1,20 @@
+# Keep rules for R8 (AGP combines all files in src/main/keepRules).
+
+# Methods called from reader.js through addJavascriptInterface.
+-keepattributes JavascriptInterface
+-keepclassmembers class com.vdelaar.mylibby.ui.reader.ReaderWebView$Bridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# kotlinx.serialization: keep generated serializers of our DTOs and models.
+-keepattributes *Annotation*, InnerClasses, Signature, Exceptions
+-keepclassmembers @kotlinx.serialization.Serializable class com.vdelaar.mylibby.** {
+    static ** Companion;
+    *** Companion;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,includedescriptorclasses class com.vdelaar.mylibby.**$$serializer { *; }
+
+# Retrofit service interfaces are created reflectively.
+-keep,allowobfuscation interface com.vdelaar.mylibby.core.network.GrimmoryApi
+-keep,allowobfuscation interface com.vdelaar.mylibby.core.network.ShelfmarkApi

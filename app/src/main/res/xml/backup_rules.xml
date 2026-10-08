@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Encrypted tokens are bound to this device's keystore and can't be restored elsewhere. -->
+    <exclude domain="sharedpref" path="secure_tokens.xml" />
+    <exclude domain="file" path="books/" />
+</full-backup-content>

@@ -1,0 +1,427 @@
+{
+ "numFound": 34,
+ "start": 0,
+ "numFoundExact": true,
+ "num_found": 34,
+ "documentation_url": "https://openlibrary.org/dev/docs/api/search",
+ "q": "subject:\"fantasy\" language:dut first_publish_year:[2023 TO *]",
+ "offset": null,
+ "docs": [
+  {
+   "author_name": [
+    "Devney Perry"
+   ],
+   "cover_i": 15239383,
+   "edition_count": 2,
+   "first_publish_year": 2026,
+   "isbn": [
+    "9781682816752",
+    "1682816753",
+    "9083585468",
+    "9789083585468"
+   ],
+   "key": "/works/OL45101987W",
+   "language": [
+    "dut",
+    "eng"
+   ],
+   "title": "Rites of the Starling",
+   "subject": [
+    "Fantasy",
+    "Romantasy",
+    "Romance",
+    "Fantasy Romance",
+    "Fiction",
+    "Adult",
+    "Magic",
+    "Science Fiction Fantasy",
+    "Series:Shield-of-Sparrows"
+   ]
+  },
+  {
+   "author_name": [
+    "Marijke F. Jansen"
+   ],
+   "cover_i": 15168482,
+   "edition_count": 1,
+   "first_publish_year": 2026,
+   "isbn": [
+    "9798231196616"
+   ],
+   "key": "/works/OL32346365W",
+   "language": [
+    "dut"
+   ],
+   "title": "Min of Meer een Monster",
+   "subject": [
+    "Fiction, fantasy, general"
+   ]
+  },
+  {
+   "author_name": [
+    "Heather Fawcett"
+   ],
+   "cover_i": 15174440,
+   "edition_count": 4,
+   "first_publish_year": 2026,
+   "isbn": [
+    "9780356525785",
+    "0593973259",
+    "9780356525778",
+    "9780593973257",
+    "0356525775",
+    "9789020560718",
+    "9020560719",
+    "0356525783"
+   ],
+   "key": "/works/OL44983631W",
+   "language": [
+    "eng",
+    "dut"
+   ],
+   "title": "Agnes Aubert's Mystical Cat Shelter",
+   "subject": [
+    "fantasy",
+    "romance",
+    "cozy",
+    "historical fiction",
+    "cozy fantasy",
+    "adult",
+    "Magic",
+    "Fiction",
+    "Historical"
+   ]
+  },
+  {
+   "author_name": [
+    "Sasha Peyton Smith"
+   ],
+   "cover_i": 15170176,
+   "edition_count": 10,
+   "first_publish_year": 2025,
+   "isbn": [
+    "9402718060",
+    "0063372533",
+    "0008722080",
+    "0063372525",
+    "9780008729424",
+    "9780008722081",
+    "0063372541",
+    "9780008657499",
+    "9789402718065",
+    "000870158X",
+    "0008729425",
+    "9780063372528",
+    "0008657491",
+    "9780008701581",
+    "9780063451827",
+    "9780063372542",
+    "0063451824",
+    "9780063372535"
+   ],
+   "key": "/works/OL42406366W",
+   "language": [
+    "dut",
+    "eng"
+   ],
+   "title": "The Rose Bargain",
+   "subject": [
+    "Fantasy",
+    "Romance",
+    "Romantasy",
+    "Young Adult",
+    "Fae",
+    "Historical Fiction",
+    "Fantasy Romance",
+    "Historical",
+    "Fiction"
+   ]
+  },
+  {
+   "author_name": [
+    "Aaf Brandt Corstius"
+   ],
+   "cover_i": 15168270,
+   "edition_count": 1,
+   "first_publish_year": 2025,
+   "isbn": [
+    "9402326243",
+    "9789402326246"
+   ],
+   "key": "/works/OL28171325W",
+   "language": [
+    "dut"
+   ],
+   "title": "Ik ga tóch iets zeggen",
+   "subject": [
+    "Fiction, fantasy, general"
+   ]
+  },
+  {
+   "author_name": [
+    "Suzanne Collins"
+   ],
+   "cover_i": 14847912,
+   "edition_count": 12,
+   "first_publish_year": 2025,
+   "isbn": [
+    "0702349070",
+    "9780702340581",
+    "9781546175766",
+    "9780702350283",
+    "900039726X",
+    "9783751207164",
+    "8804796901",
+    "1546171460",
+    "9781546171461",
+    "9788804796909",
+    "8427249977",
+    "9789000397266",
+    "9798225019280",
+    "0702340588",
+    "1761641174",
+    "9780702349072",
+    "6555325208",
+    "9788427252776",
+    "0702350281",
+    "9786555325201",
+    "1546175768",
+    "3751207163",
+    "9781761641176",
+    "9788427249974",
+    "8427252773"
+   ],
+   "key": "/works/OL43426400W",
+   "language": [
+    "spa",
+    "dut",
+    "eng",
+    "ita",
+    "ger"
+   ],
+   "title": "Sunrise on the Reaping",
+   "subject": [
+    "Dystopia",
+    "Young Adult",
+    "Fantasy",
+    "Fiction",
+    "Science Fiction",
+    "Romance",
+    "Adventure",
+    "Science Fiction Fantasy",
+    "Juegos del hambre",
+    "Serie:The_Hunger_Games"
+   ]
+  },
+  {
+   "author_name": [
+    "Ian McEwan"
+   ],
+   "cover_i": 15127252,
+   "edition_count": 3,
+   "first_publish_year": 2025,
+   "isbn": [
+    "1787335739",
+    "9789463362511",
+    "0593804732",
+    "9780593804735",
+    "9463362517",
+    "9781787335738"
+   ],
+   "key": "/works/OL44084313W",
+   "language": [
+    "eng",
+    "dut"
+   ],
+   "title": "What We Can Know",
+   "subject": [
+    "Fiction",
+    "Science Fiction",
+    "Dystopia",
+    "Literary Fiction",
+    "Fantasy",
+    "Speculative Fiction",
+    "Historical Fiction",
+    "Literature",
+    "Novels"
+   ]
+  },
+  {
+   "author_name": [
+    "Sarah Penner"
+   ],
+   "cover_i": 14867416,
+   "edition_count": 6,
+   "first_publish_year": 2025,
+   "isbn": [
+    "9789402717822",
+    "0778387887",
+    "1420518984",
+    "9781917163477",
+    "9780778308003",
+    "9780778387886",
+    "940271782X",
+    "1917163460",
+    "0778308006",
+    "1917163479",
+    "9781917163460",
+    "9781420518986"
+   ],
+   "key": "/works/OL42413211W",
+   "language": [
+    "eng",
+    "dut"
+   ],
+   "title": "The Amalfi Curse",
+   "subject": [
+    "Fantasy",
+    "Historical Fiction",
+    "Fiction",
+    "Mystery",
+    "Magical Realism",
+    "Romance",
+    "Historical",
+    "Witches"
+   ]
+  },
+  {
+   "author_name": [
+    "Sarah Beth Durst"
+   ],
+   "cover_i": 15204425,
+   "edition_count": 7,
+   "first_publish_year": 2025,
+   "isbn": [
+    "1250333989",
+    "3596712556",
+    "9789026181016",
+    "9026181019",
+    "1250324637",
+    "9781250333988",
+    "9781035042388",
+    "9781035042371",
+    "1035042371",
+    "103504238X",
+    "9783596712557",
+    "9781250324634"
+   ],
+   "key": "/works/OL42399188W",
+   "language": [
+    "ger",
+    "dut",
+    "eng"
+   ],
+   "title": "The Enchanted Greenhouse",
+   "subject": [
+    "Fantasy",
+    "Romance",
+    "Cozy",
+    "Cozy Fantasy",
+    "Fiction",
+    "Romantasy",
+    "Magic",
+    "Adult",
+    "Fantasy Romance"
+   ]
+  },
+  {
+   "author_name": [
+    "R. F. Kuang"
+   ],
+   "cover_i": 15117021,
+   "edition_count": 11,
+   "first_publish_year": 2025,
+   "isbn": [
+    "9780063021471",
+    "8551012231",
+    "9780008501860",
+    "9044370111",
+    "0008501874",
+    "9780063446243",
+    "9780008501877",
+    "0008773858",
+    "9780063021495",
+    "9780008773854",
+    "9780063442078",
+    "0063442078",
+    "0063446243",
+    "0063021501",
+    "9789044370119",
+    "9782378769871",
+    "0063021498",
+    "9788551012239",
+    "0063021471",
+    "9780063021501",
+    "2378769873",
+    "0008501866"
+   ],
+   "key": "/works/OL42397860W",
+   "language": [
+    "eng",
+    "dut",
+    "por"
+   ],
+   "title": "Katabasis",
+   "subject": [
+    "form:novel",
+    "genre:fantasy"
+   ]
+  },
+  {
+   "author_name": [
+    "Sylvia Witteman"
+   ],
+   "cover_i": 15168352,
+   "edition_count": 1,
+   "first_publish_year": 2025,
+   "isbn": [
+    "9789038816654",
+    "9038816650"
+   ],
+   "key": "/works/OL27422210W",
+   "language": [
+    "dut"
+   ],
+   "title": "Léés dat boek!",
+   "subject": [
+    "Fiction, fantasy, general"
+   ]
+  },
+  {
+   "author_name": [
+    "Oyinkan Braithwaite"
+   ],
+   "cover_i": 15130375,
+   "edition_count": 4,
+   "first_publish_year": 2025,
+   "isbn": [
+    "0385551479",
+    "9798217169139",
+    "9781805463351",
+    "9493420353",
+    "9780385551472",
+    "1805463357",
+    "9789493420359"
+   ],
+   "key": "/works/OL44216500W",
+   "language": [
+    "dut",
+    "eng"
+   ],
+   "title": "Cursed Daughters",
+   "subject": [
+    "Fiction",
+    "Contemporary",
+    "Fantasy",
+    "Literary Fiction",
+    "Africa",
+    "Mystery",
+    "Adult",
+    "Horror",
+    "Magical Realism",
+    "Adult Fiction",
+    "English literature"
+   ]
+  }
+ ]
+}

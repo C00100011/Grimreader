@@ -2,7 +2,7 @@ name: Test and Build APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, development]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -10,6 +10,9 @@ on:
         description: "Limit to ABI(s) for a smaller APK, e.g. arm64-v8a (empty = all)"
         required: false
         default: ""
+
+# Only one run at a time, so two pushes can't race to create the same tag.
+concurrency: ci-versioning
 
 jobs:
   test:
@@ -37,8 +40,27 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest
           if-no-files-found: ignore
 
-  build:
+  version:
     needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new-version: ${{ steps.increment-version.outputs.new-version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history and tags, needed to find the commits since the last tag
+
+      - name: Increment version if needed
+        id: increment-version
+        uses: RichardInnocent/semantic-versioning-git@v0.0.1
+
+  build:
+    needs: [test, version]
+    # `version` is skipped on pull requests and manual runs; build anyway then.
+    if: ${{ !cancelled() && needs.test.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.version.result) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,10 +72,24 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Work out version
+        id: ver
+        run: |
+          TAG="${{ needs.version.outputs.new-version }}"
+          VERSION="${TAG#v}"
+          if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            CODE=$(( ${BASH_REMATCH[1]} * 10000 + ${BASH_REMATCH[2]} * 100 + ${BASH_REMATCH[3]} ))
+            echo "args=-PappVersionName=$VERSION -PappVersionCode=$CODE" >> "$GITHUB_OUTPUT"
+            echo "Building $VERSION (versionCode $CODE)"
+          else
+            echo "args=" >> "$GITHUB_OUTPUT"
+            echo "No version tag available, using the version from build.gradle.kts"
+          fi
+
       - name: Build debug APK
         run: |
-          ARGS=""
-          if [ -n "${{ inputs.abi_only }}" ]; then ARGS="-PabiOnly=${{ inputs.abi_only }}"; fi
+          ARGS="${{ steps.ver.outputs.args }}"
+          if [ -n "${{ inputs.abi_only }}" ]; then ARGS="$ARGS -PabiOnly=${{ inputs.abi_only }}"; fi
           chmod +x ./gradlew
           ./gradlew assembleDebug $ARGS --stacktrace
 
