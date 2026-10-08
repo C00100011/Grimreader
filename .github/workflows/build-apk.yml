@@ -1,4 +1,4 @@
-name: Test and Build APK
+name: Test and Build Grimmory
 
 on:
   push:
