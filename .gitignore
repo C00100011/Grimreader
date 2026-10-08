@@ -23,3 +23,4 @@ local.properties
 *.apk
 *.jks
 signing.properties
+/CHANGELOG.md
