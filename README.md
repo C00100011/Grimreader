@@ -1,3 +1,5 @@
+<img width="1024" height="500" alt="feature-graphic-en" src="https://github.com/user-attachments/assets/871697af-5671-4c6b-aef9-87a62d0234f3" />
+
 # Grimreader
 
 An Android e-book reader that keeps your reading life in one place: a fast EPUB reader, read-aloud with natural voices, reading statistics and streaks, and optional sync with your own self-hosted library.
