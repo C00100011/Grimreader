@@ -11,6 +11,9 @@ on:
         required: false
         default: ""
 
+permissions:
+  contents: read
+
 # Only one run at a time, so two pushes can't race to create the same tag.
 concurrency: ci-versioning
 
@@ -47,7 +50,9 @@ jobs:
     permissions:
       contents: write
     outputs:
-      new-version: ${{ steps.increment-version.outputs.new-version }}
+      version: ${{ steps.info.outputs.version }}
+      code: ${{ steps.info.outputs.code }}
+      changed: ${{ steps.info.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,10 +62,29 @@ jobs:
         id: increment-version
         uses: RichardInnocent/semantic-versioning-git@v0.0.1
 
+      - name: Work out version
+        id: info
+        env:
+          PREVIOUS: ${{ steps.increment-version.outputs.previous-version }}
+          NEW: ${{ steps.increment-version.outputs.new-version }}
+        run: |
+          VERSION="${NEW#v}"
+          if [[ ! "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error::Could not read a version from '$NEW'. Tag the baseline first: git tag v0.9.5 && git push origin v0.9.5"
+            exit 1
+          fi
+          CODE=$(( ${BASH_REMATCH[1]} * 10000 + ${BASH_REMATCH[2]} * 100 + ${BASH_REMATCH[3]} ))
+          {
+            echo "version=$VERSION"
+            echo "code=$CODE"
+            [ "$PREVIOUS" != "$NEW" ] && echo "changed=true" || echo "changed=false"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $VERSION (versionCode $CODE), changed: $([ "$PREVIOUS" != "$NEW" ] && echo yes || echo no)"
+
+  # Pull requests, manual runs and development: an unsigned-by-us debug APK as a build artifact.
   build:
     needs: [test, version]
-    # `version` is skipped on pull requests and manual runs; build anyway then.
-    if: ${{ !cancelled() && needs.test.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.version.result) }}
+    if: ${{ !cancelled() && needs.test.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.version.result) && !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,24 +96,15 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Work out version
-        id: ver
-        run: |
-          TAG="${{ needs.version.outputs.new-version }}"
-          VERSION="${TAG#v}"
-          if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-            CODE=$(( ${BASH_REMATCH[1]} * 10000 + ${BASH_REMATCH[2]} * 100 + ${BASH_REMATCH[3]} ))
-            echo "args=-PappVersionName=$VERSION -PappVersionCode=$CODE" >> "$GITHUB_OUTPUT"
-            echo "Building $VERSION (versionCode $CODE)"
-          else
-            echo "args=" >> "$GITHUB_OUTPUT"
-            echo "No version tag available, using the version from build.gradle.kts"
-          fi
-
       - name: Build debug APK
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          CODE: ${{ needs.version.outputs.code }}
+          ABI_ONLY: ${{ inputs.abi_only }}
         run: |
-          ARGS="${{ steps.ver.outputs.args }}"
-          if [ -n "${{ inputs.abi_only }}" ]; then ARGS="$ARGS -PabiOnly=${{ inputs.abi_only }}"; fi
+          ARGS=""
+          if [ -n "$VERSION" ]; then ARGS="-PappVersionName=$VERSION -PappVersionCode=$CODE"; fi
+          if [ -n "$ABI_ONLY" ]; then ARGS="$ARGS -PabiOnly=$ABI_ONLY"; fi
           chmod +x ./gradlew
           ./gradlew assembleDebug $ARGS --stacktrace
 
@@ -98,3 +113,66 @@ jobs:
           name: grimreader-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+  # Pushes to main that produced a new version: signed release APK + AAB attached to a GitHub release.
+  release:
+    needs: version
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.version.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment: release # optional: add required reviewers to this environment for a manual approval gate
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true # never write build caches from a job that holds the signing key
+
+      - name: Restore upload key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          # Without these the Gradle build would silently fall back to the debug key.
+          for v in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then echo "::error::Secret for $v is missing"; exit 1; fi
+          done
+          umask 077
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          mkdir -p "$HOME/.config/grimreader"
+          {
+            echo "storeFile=$RUNNER_TEMP/upload.jks"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > "$HOME/.config/grimreader/signing.properties"
+
+      - name: Build signed APK and bundle
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          CODE: ${{ needs.version.outputs.code }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease bundleRelease -PappVersionName="$VERSION" -PappVersionCode="$CODE" --stacktrace
+          mkdir release
+          cp app/build/outputs/apk/release/app-release.apk "release/Grimreader-$VERSION.apk"
+          cp app/build/outputs/bundle/release/app-release.aab "release/Grimreader-$VERSION.aab"
+
+      - name: Remove upload key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" "$HOME/.config/grimreader/signing.properties"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          gh release create "v$VERSION" release/* --title "Grimreader $VERSION" --generate-notes --verify-tag

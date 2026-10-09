@@ -19,8 +19,8 @@ android {
         targetSdk = 37
         // CI derives these from the git tag (see .github/workflows/build-apk.yml): -PappVersionName=1.2.3 -PappVersionCode=10203.
         // Local builds fall back to the values below.
-        versionCode = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 17
-        versionName = (project.findProperty("appVersionName") as String?) ?: "0.9.2"
+        versionCode = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 905
+        versionName = (project.findProperty("appVersionName") as String?) ?: "0.9.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
