@@ -161,20 +161,6 @@ You can pass a version explicitly, which is what CI does:
 
 Without those properties the fallbacks in `app/build.gradle.kts` apply.
 
-### Signing your own build
-
-Release builds are signed with the key described in `~/.config/grimreader/signing.properties` (outside the repository):
-
-```properties
-storeFile=/absolute/path/to/your-upload-key.jks
-storePassword=...
-keyAlias=...
-keyPassword=...
-```
-
-> **Important:** if that file is missing or incomplete, the release build is signed with the **debug key**. It will install for testing but cannot be uploaded to Google Play.
-
-A build you sign yourself will not install over an official one (different signature); uninstall first.
 
 ### Try it without a real server
 
