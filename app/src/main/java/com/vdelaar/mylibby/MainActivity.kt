@@ -2,14 +2,12 @@ package com.vdelaar.mylibby
 
 import android.os.Bundle
 import android.view.KeyEvent
-import android.graphics.Color
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -40,8 +38,10 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
-        enableEdgeToEdge()
+        // Edge-to-edge without androidx.activity's enableEdgeToEdge(), which still calls the
+        // setStatusBarColor/setNavigationBarColor/SHORT_EDGES APIs Play flags as deprecated.
+        // Transparent bars and the cutout mode come from Theme.MyLibby.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
         val container = (application as MyLibbyApp).container
         handleOpenIntent(intent)
@@ -55,10 +55,9 @@ class MainActivity : ComponentActivity() {
                 else -> true
             }
             androidx.compose.runtime.DisposableEffect(dark) {
-                enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
-                    navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
-                )
+                val controller = WindowInsetsControllerCompat(window, window.decorView)
+                controller.isAppearanceLightStatusBars = !dark
+                controller.isAppearanceLightNavigationBars = !dark
                 onDispose { }
             }
             MyLibbyTheme(darkTheme = dark, dynamicColor = app.dynamicColor) {
