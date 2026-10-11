@@ -127,7 +127,7 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     runs-on: ubuntu-latest
-    environment: release # same secrets and optional approval gate as the release job
+    environment: development # restricted to the development branch; holds its own copy of the upload key secrets
     steps:
       - uses: actions/checkout@v4
         with:
