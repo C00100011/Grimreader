@@ -16,23 +16,31 @@ const debounce = (f, wait, immediate) => {
 
 const lerp = (min, max, x) => x * (max - min) + min
 const easeOutQuad = x => 1 - (1 - x) * (1 - x)
+// patch from Grimreader: the promise must always settle. If the WebView stops producing frames mid-animation
+// (app sent to the background, screen off, fold/unfold) requestAnimationFrame never fires again, the
+// promise never resolves and `#turnPage` keeps its lock forever (taps and volume keys stop turning pages).
+// The timer finishes the move even when no frame arrives. Seems to als fix other issue from personal situation where valume buttons
+// not always work
 const animate = (a, b, duration, ease, render) => new Promise(resolve => {
-    let start
+    let start, done = false, timer
+    const finish = () => {
+        if (done) return
+        done = true
+        clearTimeout(timer)
+        render(lerp(a, b, 1))
+        resolve()
+    }
     const step = now => {
-        if (document.hidden) {
-            render(lerp(a, b, 1))
-            return resolve()
-        }
+        if (done) return
+        if (document.hidden) return finish()
         start ??= now
         const fraction = Math.min(1, (now - start) / duration)
         render(lerp(a, b, ease(fraction)))
         if (fraction < 1) requestAnimationFrame(step)
-        else resolve()
+        else finish()
     }
-    if (document.hidden) {
-        render(lerp(a, b, 1))
-        return resolve()
-    }
+    if (document.hidden) return finish()
+    timer = setTimeout(finish, duration + 150)
     requestAnimationFrame(step)
 })
 
@@ -442,6 +450,7 @@ export class Paginator extends HTMLElement {
     #anchor = 0 // anchor view to a fraction (0-1), Range, or Element
     #justAnchored = false
     #locked = false // while true, prevent any further navigation
+    #lockedAt = 0 // Grimreader patch: when the lock was taken, so a stale lock can be ignored
     #styles
     #styleMap = new WeakMap()
     #mediaQuery = matchMedia('(prefers-color-scheme: dark)')
@@ -1062,16 +1071,25 @@ export class Paginator extends HTMLElement {
             if (this.sections[index]?.linear !== 'no') return index
     }
     async #turnPage(dir, distance) {
-        if (this.#locked) return
+        // Grimreader patch: a lock that was never released (an exception, or an animation that never
+        // finished) must not block page turns for the rest of the session.
+        const LOCK_TIMEOUT = 2000
+        if (this.#locked && Date.now() - this.#lockedAt < LOCK_TIMEOUT) return
         this.#locked = true
-        const prev = dir === -1
-        const shouldGo = await (prev ? this.#scrollPrev(distance) : this.#scrollNext(distance))
-        if (shouldGo) await this.#goTo({
-            index: this.#adjacentIndex(dir),
-            anchor: prev ? () => 1 : () => 0,
-        })
-        if (shouldGo || !this.hasAttribute('animated')) await wait(100)
-        this.#locked = false
+        this.#lockedAt = Date.now()
+        const token = this.#lockedAt
+        try {
+            const prev = dir === -1
+            const shouldGo = await (prev ? this.#scrollPrev(distance) : this.#scrollNext(distance))
+            if (shouldGo) await this.#goTo({
+                index: this.#adjacentIndex(dir),
+                anchor: prev ? () => 1 : () => 0,
+            })
+            if (shouldGo || !this.hasAttribute('animated')) await wait(100)
+        } finally {
+            // only release our own lock, not one a newer turn has taken after ours went stale
+            if (this.#lockedAt === token) this.#locked = false
+        }
     }
     prev(distance) {
         return this.#turnPage(-1, distance)
