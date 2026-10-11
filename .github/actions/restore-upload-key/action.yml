@@ -1,0 +1,30 @@
+name: Restore upload key
+description: Writes the Google Play upload keystore and signing.properties for the Gradle build. Pair with a final cleanup step.
+inputs:
+  keystore-base64: { required: true, description: Base64 keystore }
+  store-password: { required: true, description: Keystore password }
+  key-alias: { required: true, description: Key alias }
+  key-password: { required: true, description: Key password }
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        KEYSTORE_BASE64: ${{ inputs.keystore-base64 }}
+        STORE_PASSWORD: ${{ inputs.store-password }}
+        KEY_ALIAS: ${{ inputs.key-alias }}
+        KEY_PASSWORD: ${{ inputs.key-password }}
+      run: |
+        # Without these the Gradle build would silently fall back to the debug key.
+        for v in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+          if [ -z "${!v}" ]; then echo "::error::Secret for $v is missing"; exit 1; fi
+        done
+        umask 077
+        echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+        mkdir -p "$HOME/.config/grimreader"
+        {
+          echo "storeFile=$RUNNER_TEMP/upload.jks"
+          echo "storePassword=$STORE_PASSWORD"
+          echo "keyAlias=$KEY_ALIAS"
+          echo "keyPassword=$KEY_PASSWORD"
+        } > "$HOME/.config/grimreader/signing.properties"

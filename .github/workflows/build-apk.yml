@@ -1,24 +1,31 @@
-name: Test and Build Grimmory
+name: Test and Build Grimreader
 
+# main         -> test, version from conventional commits, signed APK + AAB attached to a GitHub release (Play versionCode X*1000)
+# development  -> test, signed AAB for the Play Console closed test (Play versionCode lastRelease*1000 + 1..999)
+# any other    -> test, debug APK as artifact; package id gets ".test" so it can never collide with the Play app
 on:
   push:
-    branches: [main, development]
+    branches: ["**"]
   pull_request:
   workflow_dispatch:
     inputs:
       abi_only:
-        description: "Limit to ABI(s) for a smaller APK, e.g. arm64-v8a (empty = all)"
+        description: "Limit to ABI(s) for a smaller test APK, e.g. arm64-v8a (empty = all)"
         required: false
         default: ""
 
 permissions:
   contents: read
 
-# Only one run at a time, so two pushes can't race to create the same tag.
-concurrency: ci-versioning
+# One run per ref. Main never cancels so two releases can't race for the same tag.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 
 jobs:
   test:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,9 +50,10 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest
           if-no-files-found: ignore
 
+  # Main only: derive the next semantic version from the conventional commits and tag it.
   version:
     needs: test
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -73,7 +81,8 @@ jobs:
             echo "::error::Could not read a version from '$NEW'. Tag the baseline first: git tag v0.9.5 && git push origin v0.9.5"
             exit 1
           fi
-          CODE=$(( ${BASH_REMATCH[1]} * 10000 + ${BASH_REMATCH[2]} * 100 + ${BASH_REMATCH[3]} ))
+          # X*1000: the 999 slots below each release belong to development bundles.
+          CODE=$(( (${BASH_REMATCH[1]} * 10000 + ${BASH_REMATCH[2]} * 100 + ${BASH_REMATCH[3]}) * 1000 ))
           {
             echo "version=$VERSION"
             echo "code=$CODE"
@@ -81,10 +90,10 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Version $VERSION (versionCode $CODE), changed: $([ "$PREVIOUS" != "$NEW" ] && echo yes || echo no)"
 
-  # Pull requests, manual runs and development: an unsigned-by-us debug APK as a build artifact.
-  build:
-    needs: [test, version]
-    if: ${{ !cancelled() && needs.test.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.version.result) && !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+  # Everything except main and development: debug APK for developers/testers. Not a Play build.
+  build-test-apk:
+    needs: test
+    if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/development' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -98,28 +107,90 @@ jobs:
 
       - name: Build debug APK
         env:
-          VERSION: ${{ needs.version.outputs.version }}
-          CODE: ${{ needs.version.outputs.code }}
           ABI_ONLY: ${{ inputs.abi_only }}
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
-          ARGS=""
-          if [ -n "$VERSION" ]; then ARGS="-PappVersionName=$VERSION -PappVersionCode=$CODE"; fi
+          SLUG=$(echo "$REF_NAME" | tr -c 'A-Za-z0-9\n' '-' | cut -c1-40)
+          ARGS="-PappVersionName=test-$SLUG-${GITHUB_RUN_NUMBER} -PappVersionCode=${GITHUB_RUN_NUMBER} -PappIdSuffix=.test"
           if [ -n "$ABI_ONLY" ]; then ARGS="$ARGS -PabiOnly=$ABI_ONLY"; fi
           chmod +x ./gradlew
           ./gradlew assembleDebug $ARGS --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
-          name: grimreader-debug-apk
+          name: grimreader-test-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-  # Pushes to main that produced a new version: signed release APK + AAB attached to a GitHub release.
+  # Development: signed AAB to upload by hand as a Play Console closed test.
+  build-closed-test:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    environment: development # restricted to the development branch; holds its own copy of the upload key secrets
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tags and history, to number the build after the last release
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true # never write build caches from a job that holds the signing key
+
+      - name: Work out version
+        id: info
+        run: |
+          LAST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+          if [[ ! "$LAST" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error::No release tag (vX.Y.Z) found; fetch tags or tag the baseline."; exit 1
+          fi
+          BASE=$(( ${BASH_REMATCH[1]} * 10000 + ${BASH_REMATCH[2]} * 100 + ${BASH_REMATCH[3]} ))
+          # Commits on top of the last release. Starts at 1, so it can never equal a release code (always a multiple of 1000).
+          N=$(git rev-list --count "$LAST..HEAD")
+          [ "$N" -lt 1 ] && N=1
+          if [ "$N" -gt 999 ]; then echo "::error::$N commits since $LAST, out of versionCode slots; cut a release."; exit 1; fi
+          echo "version=${LAST#v}-dev.$N" >> "$GITHUB_OUTPUT"
+          echo "code=$(( BASE * 1000 + N ))" >> "$GITHUB_OUTPUT"
+          echo "Closed test ${LAST#v}-dev.$N (versionCode $(( BASE * 1000 + N )))"
+
+      - uses: ./.github/actions/restore-upload-key
+        with:
+          keystore-base64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          store-password: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          key-alias: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          key-password: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+
+      - name: Build signed bundle
+        env:
+          VERSION: ${{ steps.info.outputs.version }}
+          CODE: ${{ steps.info.outputs.code }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew bundleRelease -PappVersionName="$VERSION" -PappVersionCode="$CODE" --stacktrace
+          mkdir out
+          cp app/build/outputs/bundle/release/app-release.aab "out/Grimreader-$VERSION.aab"
+
+      - name: Remove upload key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" "$HOME/.config/grimreader/signing.properties"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grimreader-closed-test-aab
+          path: out/*.aab
+          if-no-files-found: error
+
+  # Main when the commits produced a new version: signed APK + AAB attached to a GitHub release.
   release:
     needs: version
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.version.outputs.changed == 'true'
+    if: needs.version.outputs.changed == 'true'
     runs-on: ubuntu-latest
-    environment: release # optional: add required reviewers to this environment for a manual approval gate
+    environment: release
     permissions:
       contents: write
     steps:
@@ -132,28 +203,14 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          cache-disabled: true # never write build caches from a job that holds the signing key
+          cache-disabled: true
 
-      - name: Restore upload key
-        env:
-          KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
-        run: |
-          # Without these the Gradle build would silently fall back to the debug key.
-          for v in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
-            if [ -z "${!v}" ]; then echo "::error::Secret for $v is missing"; exit 1; fi
-          done
-          umask 077
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
-          mkdir -p "$HOME/.config/grimreader"
-          {
-            echo "storeFile=$RUNNER_TEMP/upload.jks"
-            echo "storePassword=$STORE_PASSWORD"
-            echo "keyAlias=$KEY_ALIAS"
-            echo "keyPassword=$KEY_PASSWORD"
-          } > "$HOME/.config/grimreader/signing.properties"
+      - uses: ./.github/actions/restore-upload-key
+        with:
+          keystore-base64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          store-password: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          key-alias: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          key-password: ${{ secrets.UPLOAD_KEY_PASSWORD }}
 
       - name: Build signed APK and bundle
         env:

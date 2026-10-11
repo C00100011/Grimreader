@@ -17,10 +17,12 @@ android {
         applicationId = "com.vdelaar.mylibby"
         minSdk = 31
         targetSdk = 37
-        // CI derives these from the git tag (see .github/workflows/build-apk.yml): -PappVersionName=1.2.3 -PappVersionCode=10203.
-        // Local builds fall back to the values below.
-        versionCode = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 905
-        versionName = (project.findProperty("appVersionName") as String?) ?: "0.9.5"
+        // CI sets these (see .github/workflows/build-apk.yml): -PappVersionName, -PappVersionCode, -PappIdSuffix.
+        // Google Play builds (main releases, development bundles) share one versionCode space: release = X*1000, development = last release*1000 + 1..999.
+        // Everything else (feature branches, PRs, local) gets the ".test" suffix so it is a different app that Play can never confuse with the real one.
+        versionCode = (project.findProperty("appVersionCode") as String?)?.toInt() ?: 1
+        versionName = (project.findProperty("appVersionName") as String?) ?: "0.0.0-local"
+        (project.findProperty("appIdSuffix") as String?)?.let { applicationIdSuffix = it }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
