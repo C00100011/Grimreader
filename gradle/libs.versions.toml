@@ -16,7 +16,6 @@ window = "1.5.1"
 webkit = "1.17.1"
 media3 = "1.11.1"
 glance = "1.2.0"
-splashscreen = "1.2.0"
 palette = "1.0.0"
 securityCrypto = "1.1.0"
 retrofit = "3.0.0"
@@ -33,7 +32,6 @@ espressoCore = "3.7.0"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 compose-ui = { group = "androidx.compose.ui", name = "ui" }
 compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
