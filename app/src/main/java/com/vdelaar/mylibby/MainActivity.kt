@@ -50,9 +50,7 @@ class MainActivity : ComponentActivity() {
             val forceLight by ThemeOverride.forceLight.collectAsStateWithLifecycle()
             val dark = when {
                 forceLight || !app.onboardingDone -> false
-                app.themeMode == ThemeMode.SYSTEM -> isSystemInDarkTheme()
-                app.themeMode == ThemeMode.LIGHT -> false
-                else -> true
+                else -> app.themeMode.isDark(isSystemInDarkTheme())
             }
             androidx.compose.runtime.DisposableEffect(dark) {
                 val controller = WindowInsetsControllerCompat(window, window.decorView)
