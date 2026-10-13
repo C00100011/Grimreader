@@ -82,9 +82,9 @@
     <string name="credits">Made with ♥️ by the Grimreader contributors</string>
     <string name="daily_reminder">Daily reminder</string>
     <string name="daily_reminder_body">Only if you haven\'t reached your goal yet</string>
-    <string name="dark_at_night">Switch to a dark page at night</string>
-    <string name="dark_reader_night">Dark reader theme at night</string>
-    <string name="dark_reader_night_body">Follow the system\'s dark mode</string>
+    <string name="dark_at_night">Dark page when the app is dark</string>
+    <string name="dark_reader_night">Dark reader theme with dark mode</string>
+    <string name="dark_reader_night_body">Uses the dark page theme whenever the app is dark: your Appearance choice (Light, Dark or System), and for System the phone\'s dark mode. It does not look at the time of day.</string>
     <string name="day_streak">day streak</string>
     <string name="delete">Delete</string>
     <string name="delete_bookmark">Delete bookmark</string>
@@ -1067,4 +1067,14 @@
     <string name="debug_copy">Copy</string>
     <string name="debug_copied">Report copied</string>
     <string name="debug_share_title">Grimreader connection report</string>
+    <string name="idle_title">Are you still reading?</string>
+    <string name="idle_body">Nothing has happened for a while, so reading time is paused. It only counts the time you really read.</string>
+    <string name="idle_continue">Yes, still reading</string>
+    <string name="idle_detection">Pause when I stop reading</string>
+    <string name="idle_detection_body">Pauses the reading timer when nothing happens for longer than you usually need for a page, so your statistics only count real reading.</string>
+    <string name="idle_multiplier">Wait time</string>
+    <string name="idle_multiplier_body">How many times your usual time per page to wait before pausing (at least 1 minute, at most 10).</string>
+    <string name="idle_multiplier_value">%1$.1f×</string>
+    <string name="idle_prompt">Ask “Are you still reading?”</string>
+    <string name="idle_prompt_body">Off pauses silently; the next page turn or tap continues.</string>
 </resources>
