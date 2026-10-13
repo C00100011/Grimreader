@@ -39,6 +39,7 @@ class OpdsRepository(
     val client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
+        .addInterceptor(com.vdelaar.mylibby.core.debug.NetworkLogInterceptor("OPDS"))
         .addInterceptor { chain ->
             val req = chain.request()
             val app = settings.app.value

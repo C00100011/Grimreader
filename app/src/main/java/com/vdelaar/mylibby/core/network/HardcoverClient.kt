@@ -71,6 +71,7 @@ class HardcoverClient(
     private val http: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(35, TimeUnit.SECONDS)
+        .addInterceptor(com.vdelaar.mylibby.core.debug.NetworkLogInterceptor("Hardcover"))
         .build(),
 ) : HardcoverGateway {
     override val hasKey: Boolean get() = parseHardcoverKey(tokens.hardcoverKey) != null
