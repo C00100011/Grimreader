@@ -1,0 +1,13 @@
+Google ML Kit GenAI Prompt API (Gemini Nano on the device)
+Artifacts: com.google.mlkit:genai-prompt 1.0.0-beta4, com.google.mlkit:genai-common 1.0.0-beta4
+Copyright Google LLC
+
+This component is not open source. It is distributed under the ML Kit Terms of Service:
+https://developers.google.com/ml-kit/terms
+
+The GenAI APIs are also covered by the ML Kit GenAI API Additional Terms of Service, which you can read at:
+https://developers.google.com/ml-kit/terms#genai
+
+Grimreader uses it only to run Gemini Nano on your own phone, through Android's AICore. The text of the books you read is not sent to Google or to anyone else by this feature: the model runs on the device. AICore itself downloads and updates the model; see Google's privacy information for Gemini Nano at https://developer.android.com/ai/gemini-nano.
+
+The use of the generated text is your own responsibility, as the ML Kit GenAI terms require; answers can be wrong.

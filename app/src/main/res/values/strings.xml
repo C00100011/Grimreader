@@ -1000,4 +1000,47 @@
     <string name="swipe_done_title">That’s this week’s deck</string>
     <string name="swipe_done_body">New picks arrive on Monday. Your choices are on your list.</string>
     <string name="further_other_reader">Your other reader (Kobo or KOReader) is further along (%1$d%%).</string>
+    <!-- Ask the book (on-device AI) -->
+    <string name="ask_about_book">Ask about this book</string>
+    <string name="ask_book_scope">Answers use only what you have read so far (%1$d%%) and stay on your phone</string>
+    <string name="ask_clear_conversation">Clear conversation</string>
+    <string name="ask_rebuild_notes">Rebuild notes for this book</string>
+    <string name="ask_unavailable">This phone cannot run the on-device AI model.</string>
+    <string name="ask_thinking">Thinking…</string>
+    <string name="ask_nothing_read">You have not read anything yet, so there is nothing to ask about.</string>
+    <string name="ask_placeholder">Ask about a character, a place, a plot point…</string>
+    <string name="ask_send">Send question</string>
+    <string name="ask_intro">Ask anything about the story so far. Nothing past your current page is used, so there are no spoilers.</string>
+    <string name="ask_example_1">“Is Peter related to Anna?”</string>
+    <string name="ask_example_2">“Where was the murder weapon found?”</string>
+    <string name="ask_you_are_in">You are in: %1$s</string>
+    <string name="ask_preparing">Making notes on what you have read… %1$d of %2$d</string>
+    <string name="ask_paused">Notes are paused (the AI is busy or out of quota). Answers use the notes made so far.</string>
+    <string name="ask_download_explain">Your phone supports Gemini Nano, but the model is not downloaded yet. It runs fully on the phone; nothing about your book is sent anywhere.</string>
+    <string name="ask_download">Download the model</string>
+    <string name="ask_downloading">Downloading… %1$d%%</string>
+    <string name="on_device_ai">On-device AI</string>
+    <string name="ask_downloading_bytes">Downloading… %1$s so far</string>
+    <string name="ask_downloading_unknown">Downloading… the system has not said how far it is</string>
+    <string name="ask_downloading_background">Android downloads the model in the background and can take a few minutes. This screen carries on by itself when it is ready.</string>
+    <string name="ai_notes">AI notes</string>
+    <string name="ai_notes_sub_empty">Notes the on-device AI made about your books, and the model</string>
+    <plurals name="ai_notes_summary">
+        <item quantity="one">%1$d book · %2$s</item>
+        <item quantity="other">%1$d books · %2$s</item>
+    </plurals>
+    <string name="ai_notes_explain">While you chat about a book, the on-device AI writes short notes on the parts you have read. They are stored only on this phone, in this app, and are used to answer your questions. Deleting them is safe: they are made again the next time you open the chat.</string>
+    <string name="ai_notes_none">No notes yet. They appear after you ask a question about a book.</string>
+    <string name="ai_notes_row">%1$d of %2$d sections noted · %3$s</string>
+    <string name="ai_notes_delete_for">Delete AI notes for %1$s</string>
+    <string name="ai_notes_delete_all">Delete all notes</string>
+    <string name="ai_notes_delete_all_body">This removes the AI notes of every book on this phone. They are made again when you chat about a book.</string>
+    <string name="ai_notes_sheet_sub">%1$d of %2$d sections have notes. Only sections you have finished are noted.</string>
+    <string name="ai_notes_sheet_empty">No notes for this book yet.</string>
+    <string name="ai_notes_delete_book">Delete notes for this book</string>
+    <string name="ai_remove_model">Remove the model…</string>
+    <string name="ai_remove_model_body">Gemini Nano is stored by Android\'s AICore app, so Grimreader cannot delete it itself. This opens AICore\'s app info: choose Storage, then Clear storage. Other apps that use Gemini Nano will need to download it again too.</string>
+    <string name="ai_notes_book_gone">Book no longer on this phone</string>
+    <string name="libs_group_ai">On-device AI</string>
+    <string name="lib_mlkit">Runs Gemini Nano on your phone for the book chat. Not open source; used under Google\'s ML Kit terms.</string>
 </resources>

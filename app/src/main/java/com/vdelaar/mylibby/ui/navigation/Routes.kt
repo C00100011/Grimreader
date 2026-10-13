@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object SwipeRoute
 @Serializable data object WantedRoute
 @Serializable data object DownloadsRoute
+@Serializable data object AiNotesRoute
 @Serializable data object SuggestionsRoute
 @Serializable data class OpdsRoute(val url: String = "")
 @Serializable data object LibrariesRoute

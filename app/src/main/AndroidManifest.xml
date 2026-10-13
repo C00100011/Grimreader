@@ -14,6 +14,8 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+        <!-- Lets the settings screen say whether the AICore app (home of Gemini Nano) is installed. -->
+        <package android:name="com.google.android.aicore" />
     </queries>
 
     <application

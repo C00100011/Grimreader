@@ -70,6 +70,7 @@ class AppNavigator(private val nav: NavHostController) {
     fun libraries() = nav.navigate(LibrariesRoute) { launchSingleTop = true }
     fun opds(url: String = "") = nav.navigate(OpdsRoute(url))
     fun downloads() = nav.navigate(DownloadsRoute) { launchSingleTop = true }
+    fun aiNotes() = nav.navigate(AiNotesRoute) { launchSingleTop = true }
     fun swipe() = nav.navigate(SwipeRoute) { launchSingleTop = true }
     fun wanted() = nav.navigate(WantedRoute) { launchSingleTop = true }
     fun back() { nav.popBackStack() }
@@ -130,6 +131,7 @@ fun AppNavHost() {
         composable<LibrariesRoute> { LibrariesScreen(navigator) }
         composable<OpdsRoute> { entry -> com.vdelaar.mylibby.ui.opds.OpdsScreen(entry.toRoute<OpdsRoute>().url, navigator) }
         composable<DownloadsRoute> { DownloadsScreen(navigator) }
+        composable<AiNotesRoute> { com.vdelaar.mylibby.ui.settings.AiNotesScreen(navigator) }
         composable<SwipeRoute> { com.vdelaar.mylibby.ui.newbooks.SwipeScreen(navigator) }
         composable<WantedRoute> { com.vdelaar.mylibby.ui.newbooks.WantedScreen(navigator) }
     }

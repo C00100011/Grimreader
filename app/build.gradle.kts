@@ -121,6 +121,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.coil.compose)
     implementation(libs.onnxruntime.android)
+    implementation(libs.mlkit.genai.prompt)
     implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.junit)

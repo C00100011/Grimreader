@@ -257,6 +257,57 @@ interface SectionStatDao {
     fun observeAvgSecondsPerPage(): Flow<Double>
 }
 
+/** What the AI notes of one book take up: [total] pieces of text, [summarised] of them with notes, [bytes] of text and notes in all. */
+data class BookNotesRow(val bookId: Long, val total: Int, val summarised: Int, val bytes: Long)
+
+data class NoteRow(val idx: Int, val section: String, val summary: String)
+
+@Dao
+interface BookChunkDao {
+    @Query(
+        "SELECT bookId, COUNT(*) AS total, SUM(CASE WHEN summary IS NOT NULL THEN 1 ELSE 0 END) AS summarised, " +
+            "SUM(LENGTH(text) + COALESCE(LENGTH(summary), 0)) AS bytes FROM book_chunks GROUP BY bookId ORDER BY bookId DESC"
+    )
+    fun observeStats(): Flow<List<BookNotesRow>>
+
+    @Query("SELECT idx, section, summary FROM book_chunks WHERE bookId = :bookId AND summary IS NOT NULL ORDER BY idx")
+    suspend fun notes(bookId: Long): List<NoteRow>
+
+    @Query("DELETE FROM book_chunks")
+    suspend fun deleteAll()
+
+    @Query("SELECT COUNT(*) FROM book_chunks WHERE bookId = :bookId")
+    suspend fun count(bookId: Long): Int
+
+    @Query("SELECT * FROM book_chunks WHERE bookId = :bookId ORDER BY idx")
+    suspend fun all(bookId: Long): List<BookChunkEntity>
+
+    /** The next chunks, in reading order, that lie fully before the reader and still need a summary. */
+    @Query(
+        "SELECT * FROM book_chunks WHERE bookId = :bookId AND summary IS NULL AND " +
+            "(spineIndex < :spine OR (spineIndex = :spine AND endShare <= :share)) ORDER BY idx LIMIT :n"
+    )
+    suspend fun pending(bookId: Long, spine: Int, share: Float, n: Int): List<BookChunkEntity>
+
+    @Query("SELECT COUNT(*) FROM book_chunks WHERE bookId = :bookId AND (spineIndex < :spine OR (spineIndex = :spine AND endShare <= :share))")
+    suspend fun countBefore(bookId: Long, spine: Int, share: Float): Int
+
+    @Query(
+        "SELECT COUNT(*) FROM book_chunks WHERE bookId = :bookId AND summary IS NOT NULL AND " +
+            "(spineIndex < :spine OR (spineIndex = :spine AND endShare <= :share))"
+    )
+    suspend fun summarizedBefore(bookId: Long, spine: Int, share: Float): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(chunks: List<BookChunkEntity>)
+
+    @Query("UPDATE book_chunks SET summary = :summary WHERE bookId = :bookId AND idx = :idx")
+    suspend fun setSummary(bookId: Long, idx: Int, summary: String)
+
+    @Query("DELETE FROM book_chunks WHERE bookId = :bookId")
+    suspend fun delete(bookId: Long)
+}
+
 @Dao
 interface TextStatsDao {
     @Query("SELECT * FROM book_text_stats WHERE bookId = :bookId")

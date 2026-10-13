@@ -75,6 +75,18 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
     val annotations: StateFlow<List<AnnotationEntity>> = c.reading.observeAnnotations(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val bookmarks: StateFlow<List<BookmarkEntity>> = c.reading.observeBookmarks(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    /** Questions about the book, answered on the phone from what has been read so far. */
+    val chat = com.vdelaar.mylibby.ai.BookChatController(
+        engine = c.bookChat, ai = c.localAi, bookId = bookId, scope = viewModelScope,
+        position = {
+            val l = _state.value.location
+            // The start of the page being read, inside the section the reader reports: nothing from this page on is used.
+            val share = if (l != null && l.pagesInSection > 0) (l.pageInSection - 1).coerceAtLeast(0).toFloat() / l.pagesInSection else 0f
+            com.vdelaar.mylibby.ai.ReadPosition(l?.sectionIndex ?: 0, share, ((l?.fraction ?: 0.0) * 100).toInt())
+        },
+        bookInfo = { (_state.value.book?.title.orEmpty()) to (_state.value.book?.authors?.joinToString(", ").orEmpty()) },
+    )
+
     val speedSettings = c.settings.speed
     private val _speedRead = MutableStateFlow(SpeedUiState())
     val speedRead: StateFlow<SpeedUiState> = _speedRead.asStateFlow()
@@ -149,6 +161,7 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
                     file.parentFile?.name == "books" && file.parentFile?.parentFile == c.appContext.filesDir -> "books"
                     else -> "cache"
                 }
+                chat.attach(file)
                 _state.update {
                     it.copy(file = file, fileUrl = "https://appassets.androidplatform.net/$base/${file.name}", initialCfi = initial, loadingMessage = str(R.string.preparing_pages), downloadProgress = null)
                 }
