@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.LocalFireDepartment
@@ -118,6 +119,7 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
             TopAppBar(
                 title = { Text(stringResource(page?.title ?: R.string.settings)) },
                 navigationIcon = { IconButton(onClick = { if (backToOverview) pageName = null else navigator.back() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.action_back)) } },
+                actions = { IconButton(onClick = navigator::debug) { Icon(Icons.Rounded.BugReport, stringResource(R.string.debug_title)) } },
                 scrollBehavior = scroll,
             )
         },

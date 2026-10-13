@@ -39,6 +39,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Person
@@ -91,7 +92,7 @@ import com.vdelaar.mylibby.ui.settings.VoicePickerSection
 val AvatarChoices = listOf("📚", "🦉", "🐱", "🦊", "🐻", "🌙", "☕", "🌿", "🚀", "🎧", "🐉", "🌻")
 
 @Composable
-fun OnboardingScreen(connectOnly: Boolean = false, onFinished: () -> Unit, onCancel: () -> Unit = {}) {
+fun OnboardingScreen(connectOnly: Boolean = false, onFinished: () -> Unit, onCancel: () -> Unit = {}, onDebug: () -> Unit = {}) {
     val vm = appViewModel(key = "onboarding-$connectOnly") { OnboardingViewModel(it, connectOnly) }
     val state by vm.state.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(state.finished) { if (state.finished) onFinished() }
@@ -119,14 +120,16 @@ fun OnboardingScreen(connectOnly: Boolean = false, onFinished: () -> Unit, onCan
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(Modifier.widthIn(max = 560.dp).fillMaxSize()) {
-            if (canGoBack) {
-                Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (canGoBack) {
                     IconButton(onClick = goBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.action_back)) }
                     if (!connectOnly) LinearProgressIndicator(
                         progress = { state.step.slot / OnboardingStep.SLOTS.toFloat() },
-                        modifier = Modifier.weight(1f).padding(end = 24.dp),
-                    )
-                }
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    ) else Spacer(Modifier.weight(1f))
+                } else Spacer(Modifier.weight(1f))
+                // Connection problems show up here first, so the diagnostics are one tap away.
+                IconButton(onClick = onDebug) { Icon(Icons.Rounded.BugReport, stringResource(R.string.debug_title)) }
             }
             AnimatedContent(
                 targetState = state.step,

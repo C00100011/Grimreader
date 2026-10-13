@@ -45,7 +45,7 @@ class NeuralVoiceStore(context: Context, private val scope: CoroutineScope) {
     private data class Remote(val path: String, val size: Long?)
 
     private val dir = File(context.filesDir, "tts/supertonic3")
-    private val http = OkHttpClient.Builder().readTimeout(60, TimeUnit.SECONDS).build()
+    private val http = OkHttpClient.Builder().readTimeout(60, TimeUnit.SECONDS).addInterceptor(com.vdelaar.mylibby.core.debug.NetworkLogInterceptor("Voices")).build()
 
     private val files: List<Remote> = listOf(
         Remote("onnx/duration_predictor.onnx", 3_700_147),

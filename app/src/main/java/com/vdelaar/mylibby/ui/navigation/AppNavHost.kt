@@ -67,6 +67,7 @@ class AppNavigator(private val nav: NavHostController) {
     /** Settings opened straight on a page ([page] = a SettingsPage name, e.g. "READING"). */
     fun settingsPage(page: String) = nav.navigate(SettingsRoute(page)) { launchSingleTop = true }
     fun suggestions() = nav.navigate(SuggestionsRoute) { launchSingleTop = true }
+    fun debug() = nav.navigate(DebugRoute) { launchSingleTop = true }
     fun libraries() = nav.navigate(LibrariesRoute) { launchSingleTop = true }
     fun opds(url: String = "") = nav.navigate(OpdsRoute(url))
     fun downloads() = nav.navigate(DownloadsRoute) { launchSingleTop = true }
@@ -111,7 +112,8 @@ fun AppNavHost() {
         popEnterTransition = { fadeIn() },
         popExitTransition = { slideOutHorizontally { it / 4 } + fadeOut() },
     ) {
-        composable<OnboardingRoute> { entry -> OnboardingScreen(connectOnly = entry.toRoute<OnboardingRoute>().connectOnly, onFinished = navigator::toMain, onCancel = navigator::back) }
+        composable<OnboardingRoute> { entry -> OnboardingScreen(connectOnly = entry.toRoute<OnboardingRoute>().connectOnly, onFinished = navigator::toMain, onCancel = navigator::back, onDebug = navigator::debug) }
+        composable<DebugRoute> { com.vdelaar.mylibby.ui.settings.DebugScreen(navigator) }
         composable<MainRoute> { MainScaffold(navigator) }
         composable<BookRoute> { entry ->
             BookDetailScreen(entry.toRoute<BookRoute>().id, navigator, onBack = navigator::back)
