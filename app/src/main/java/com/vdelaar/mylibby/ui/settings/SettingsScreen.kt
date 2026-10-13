@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.LocalFireDepartment
@@ -254,6 +255,13 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
                                 })
                         }
                         SettingsRow(stringResource(R.string.downloaded_books), Formatter.formatShortFileSize(context, storage), Icons.Rounded.Storage, onClick = navigator::downloads)
+                        val aiNotes by c.db.bookChunks().observeStats().collectAsStateWithLifecycle(emptyList())
+                        SettingsRow(
+                            stringResource(R.string.ai_notes),
+                            if (aiNotes.isEmpty()) stringResource(R.string.ai_notes_sub_empty)
+                            else pluralStringResource(R.plurals.ai_notes_summary, aiNotes.size, aiNotes.size, Formatter.formatShortFileSize(context, aiNotes.sumOf { it.bytes })),
+                            Icons.Rounded.AutoAwesome, onClick = navigator::aiNotes,
+                        )
                         SettingsRow(stringResource(R.string.clear_cache), stringResource(R.string.clear_cache_body), Icons.Rounded.Delete, onClick = {
                             scope.launch { c.downloads.clearStreamCache(); snackbar.showSnackbar(clearedMsg) }
                         })

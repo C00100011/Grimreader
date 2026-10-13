@@ -51,5 +51,8 @@ class AppContainer(context: Context) {
     )
     val discover = com.vdelaar.mylibby.data.DiscoverRepository(db, settings, library, com.vdelaar.mylibby.data.HardcoverCache(java.io.File(context.cacheDir, "openlibrary")))
     val swipe = com.vdelaar.mylibby.data.SwipeRepository(db, discover, library)
+    /** The on-device model (Gemini Nano) and the book chat built on it; the chat is hidden on phones without the model. */
+    val localAi: com.vdelaar.mylibby.ai.LocalAi = com.vdelaar.mylibby.ai.GeminiNanoAi()
+    val bookChat = com.vdelaar.mylibby.ai.BookChatEngine(db.bookChunks(), localAi)
     val personalData = com.vdelaar.mylibby.data.PersonalDataRepository(db, settings, sync)
 }

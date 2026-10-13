@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.RecordVoiceOver
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
@@ -134,6 +135,8 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var showContents by rememberSaveable { mutableStateOf(false) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
+    var showAsk by rememberSaveable { mutableStateOf(false) }
+    val chat by vm.chat.state.collectAsStateWithLifecycle()
     var noteFor by remember { mutableStateOf<AnnotationEntity?>(null) }
     var noteForSelection by rememberSaveable { mutableStateOf(false) }
 
@@ -273,6 +276,7 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
                 onBack = onBack,
                 onBookmark = vm::toggleBookmark,
                 onSearch = { showSearch = true },
+                onAsk = if (chat.offered) ({ showAsk = true; vm.chat.open() }) else null,
             )
         }
         AnimatedVisibility(
@@ -361,6 +365,17 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
         onDeleteBookmark = { vm.deleteBookmark(it) },
         onDismiss = { showContents = false },
     )
+    if (showAsk && chat.offered) AskBookSheet(
+        chat = chat,
+        chapter = state.location?.tocLabel.orEmpty(),
+        percent = ((state.location?.fraction ?: 0.0) * 100).toInt(),
+        onAsk = vm.chat::ask,
+        onDownload = vm.chat::download,
+        onRetry = vm.chat::retryIndexing,
+        onClearConversation = vm.chat::clearConversation,
+        onDeleteIndex = vm.chat::deleteIndex,
+        onDismiss = { showAsk = false; vm.chat.close() },
+    )
     if (showSearch) SearchSheet(
         results = state.searchResults,
         searching = state.searching,
@@ -420,7 +435,7 @@ private fun LoadingOverlay(state: ReaderUiState, bg: Color, fg: Color, onBack: (
 }
 
 @Composable
-private fun TopChrome(title: String, chapter: String, bookmarked: Boolean, onBack: () -> Unit, onBookmark: () -> Unit, onSearch: () -> Unit) {
+private fun TopChrome(title: String, chapter: String, bookmarked: Boolean, onBack: () -> Unit, onBookmark: () -> Unit, onSearch: () -> Unit, onAsk: (() -> Unit)? = null) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shadowElevation = 3.dp) {
         Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.close_book)) }
@@ -428,6 +443,7 @@ private fun TopChrome(title: String, chapter: String, bookmarked: Boolean, onBac
                 Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (chapter.isNotBlank()) Text(chapter, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            onAsk?.let { ask -> IconButton(onClick = ask) { Icon(Icons.Rounded.AutoAwesome, stringResource(R.string.ask_about_book)) } }
             IconButton(onClick = onSearch) { Icon(Icons.Rounded.Search, stringResource(R.string.search_in_book)) }
             IconButton(onClick = onBookmark) {
                 Icon(if (bookmarked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder, stringResource(if (bookmarked) R.string.remove_bookmark else R.string.bookmark_page))

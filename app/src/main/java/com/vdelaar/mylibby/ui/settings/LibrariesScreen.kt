@@ -87,6 +87,9 @@ private val groups = listOf(
         Lib("Supertonic 3 (model)", null, "OpenRAIL-M", R.string.lib_supertonic, "Supertone Inc.", "openrail-m-supertonic.txt"),
         Lib("Supertonic (sample code, ported to Kotlin)", null, "MIT", R.string.lib_supertonic_code, "Supertone Inc.", "mit-supertonic-code.txt"),
     )),
+    LibGroup(R.string.libs_group_ai, listOf(
+        Lib("ML Kit GenAI Prompt API (Gemini Nano)", "1.0.0-beta4", "ML Kit Terms of Service", R.string.lib_mlkit, "Google LLC", "mlkit-terms.txt"),
+    )),
     LibGroup(R.string.libs_group_fonts, listOf(
         Lib("Literata", null, "SIL OFL 1.1", R.string.lib_font_one, "The Literata Project Authors", "ofl-literata.txt"),
         Lib("Lora", null, "SIL OFL 1.1", R.string.lib_font_one, "The Lora Project Authors", "ofl-lora.txt"),

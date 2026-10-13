@@ -999,4 +999,47 @@
     <string name="swipe_done_title">Dat was de stapel van deze week</string>
     <string name="swipe_done_body">Op maandag komen er nieuwe. Je keuzes staan op je lijst.</string>
     <string name="further_other_reader">Je andere e-reader (Kobo of KOReader) is verder (%1$d%%).</string>
+    <!-- Ask the book (on-device AI) -->
+    <string name="ask_about_book">Stel een vraag over dit boek</string>
+    <string name="ask_book_scope">Antwoorden gebruiken alleen wat je tot nu toe hebt gelezen (%1$d%%) en blijven op je telefoon</string>
+    <string name="ask_clear_conversation">Gesprek wissen</string>
+    <string name="ask_rebuild_notes">Aantekeningen van dit boek opnieuw maken</string>
+    <string name="ask_unavailable">Deze telefoon kan het AI-model op het apparaat niet draaien.</string>
+    <string name="ask_thinking">Aan het nadenken…</string>
+    <string name="ask_nothing_read">Je hebt nog niets gelezen, dus er valt nog niets te vragen.</string>
+    <string name="ask_placeholder">Vraag over een personage, plek of gebeurtenis…</string>
+    <string name="ask_send">Vraag versturen</string>
+    <string name="ask_intro">Vraag alles over het verhaal tot nu toe. Er wordt niets voorbij je huidige pagina gebruikt, dus geen spoilers.</string>
+    <string name="ask_example_1">“Is Peter familie van Anna?”</string>
+    <string name="ask_example_2">“Waar lag het moordwapen?”</string>
+    <string name="ask_you_are_in">Je zit in: %1$s</string>
+    <string name="ask_preparing">Aantekeningen maken van wat je las… %1$d van %2$d</string>
+    <string name="ask_paused">Aantekeningen staan op pauze (de AI is bezig of de limiet is bereikt). Antwoorden gebruiken de aantekeningen tot nu toe.</string>
+    <string name="ask_download_explain">Je telefoon ondersteunt Gemini Nano, maar het model is nog niet gedownload. Het draait volledig op de telefoon; er wordt niets van je boek verstuurd.</string>
+    <string name="ask_download">Model downloaden</string>
+    <string name="ask_downloading">Downloaden… %1$d%%</string>
+    <string name="on_device_ai">AI op het apparaat</string>
+    <string name="ask_downloading_bytes">Downloaden… %1$s tot nu toe</string>
+    <string name="ask_downloading_unknown">Downloaden… het systeem meldt niet hoe ver het is</string>
+    <string name="ask_downloading_background">Android downloadt het model op de achtergrond; dat kan een paar minuten duren. Dit scherm gaat vanzelf verder als het klaar is.</string>
+    <string name="ai_notes">AI-aantekeningen</string>
+    <string name="ai_notes_sub_empty">Aantekeningen die de AI op je telefoon over je boeken maakte, en het model</string>
+    <plurals name="ai_notes_summary">
+        <item quantity="one">%1$d boek · %2$s</item>
+        <item quantity="other">%1$d boeken · %2$s</item>
+    </plurals>
+    <string name="ai_notes_explain">Terwijl je over een boek chat, schrijft de AI op je telefoon korte aantekeningen over de delen die je hebt gelezen. Ze staan alleen op deze telefoon, in deze app, en worden gebruikt om je vragen te beantwoorden. Verwijderen is veilig: ze worden opnieuw gemaakt de volgende keer dat je de chat opent.</string>
+    <string name="ai_notes_none">Nog geen aantekeningen. Ze verschijnen nadat je een vraag over een boek stelt.</string>
+    <string name="ai_notes_row">%1$d van %2$d delen genoteerd · %3$s</string>
+    <string name="ai_notes_delete_for">AI-aantekeningen van %1$s verwijderen</string>
+    <string name="ai_notes_delete_all">Alle aantekeningen verwijderen</string>
+    <string name="ai_notes_delete_all_body">Dit verwijdert de AI-aantekeningen van elk boek op deze telefoon. Ze worden opnieuw gemaakt als je over een boek chat.</string>
+    <string name="ai_notes_sheet_sub">%1$d van %2$d delen hebben aantekeningen. Alleen delen die je hebt uitgelezen worden genoteerd.</string>
+    <string name="ai_notes_sheet_empty">Nog geen aantekeningen voor dit boek.</string>
+    <string name="ai_notes_delete_book">Aantekeningen van dit boek verwijderen</string>
+    <string name="ai_remove_model">Model verwijderen…</string>
+    <string name="ai_remove_model_body">Gemini Nano wordt bewaard door de AICore-app van Android, dus Grimreader kan het zelf niet verwijderen. Dit opent de app-info van AICore: kies Opslag en dan Opslag wissen. Andere apps die Gemini Nano gebruiken moeten het dan ook opnieuw downloaden.</string>
+    <string name="ai_notes_book_gone">Boek staat niet meer op deze telefoon</string>
+    <string name="libs_group_ai">AI op het apparaat</string>
+    <string name="lib_mlkit">Draait Gemini Nano op je telefoon voor de boekchat. Geen open source; gebruikt onder de ML Kit-voorwaarden van Google.</string>
 </resources>
