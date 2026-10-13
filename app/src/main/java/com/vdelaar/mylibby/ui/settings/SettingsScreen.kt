@@ -174,6 +174,17 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
                         SettingsSwitchRow(stringResource(R.string.tap_edges), icon = Icons.Rounded.TouchApp, checked = reader.tapToTurn, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(tapToTurn = v) } } })
                         SettingsSwitchRow(stringResource(R.string.volume_keys), icon = Icons.AutoMirrored.Rounded.VolumeUp, checked = reader.volumeKeysTurn, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(volumeKeysTurn = v) } } })
                         SettingsSwitchRow(stringResource(R.string.keep_screen_on), checked = reader.keepScreenOn, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(keepScreenOn = v) } } })
+                        SettingsSwitchRow(stringResource(R.string.idle_detection), stringResource(R.string.idle_detection_body), checked = reader.idleDetection, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(idleDetection = v) } } })
+                        if (reader.idleDetection) {
+                            SettingsRow(stringResource(R.string.idle_multiplier), stringResource(R.string.idle_multiplier_body)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    TextButton(onClick = { scope.launch { c.settings.updateReader { it.copy(idleMultiplier = (it.idleMultiplier - 0.5f).coerceAtLeast(1.5f)) } } }) { Text("–") }
+                                    Text(stringResource(R.string.idle_multiplier_value, reader.idleMultiplier))
+                                    TextButton(onClick = { scope.launch { c.settings.updateReader { it.copy(idleMultiplier = (it.idleMultiplier + 0.5f).coerceAtMost(4f)) } } }) { Text("+") }
+                                }
+                            }
+                            SettingsSwitchRow(stringResource(R.string.idle_prompt), stringResource(R.string.idle_prompt_body), checked = reader.idlePrompt, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(idlePrompt = v) } } })
+                        }
                         Text(
                             stringResource(R.string.reader_settings_hint),
                             style = MaterialTheme.typography.bodySmall,

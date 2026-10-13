@@ -81,9 +81,9 @@
     <string name="credits">Gemaakt met ♥️ door de Grimreader-bijdragers</string>
     <string name="daily_reminder">Dagelijkse herinnering</string>
     <string name="daily_reminder_body">Alleen als je je doel nog niet hebt gehaald</string>
-    <string name="dark_at_night">\'s Avonds een donkere pagina</string>
-    <string name="dark_reader_night">Donker leesthema \'s avonds</string>
-    <string name="dark_reader_night_body">Volgt de donkere modus van het systeem</string>
+    <string name="dark_at_night">Donkere pagina als de app donker is</string>
+    <string name="dark_reader_night">Donker leesthema bij donkere modus</string>
+    <string name="dark_reader_night_body">Gebruikt het donkere paginathema zodra de app donker is: je keuze bij Uiterlijk (Licht, Donker of Systeem) en bij Systeem de donkere modus van de telefoon. Kijkt niet naar het tijdstip.</string>
     <string name="day_streak">dagen op rij</string>
     <string name="delete">Verwijderen</string>
     <string name="delete_bookmark">Bladwijzer verwijderen</string>
@@ -1066,4 +1066,14 @@
     <string name="debug_copy">Kopiëren</string>
     <string name="debug_copied">Rapport gekopieerd</string>
     <string name="debug_share_title">Grimreader verbindingsrapport</string>
+    <string name="idle_title">Ben je nog aan het lezen?</string>
+    <string name="idle_body">Er is al een tijdje niets gebeurd, dus de leestijd staat op pauze. Alleen de tijd dat je echt leest telt mee.</string>
+    <string name="idle_continue">Ja, ik lees nog</string>
+    <string name="idle_detection">Pauzeer als ik stop met lezen</string>
+    <string name="idle_detection_body">Zet de leestimer op pauze als er langer niets gebeurt dan je gewoonlijk voor een pagina nodig hebt, zodat je statistieken alleen echte leestijd tellen.</string>
+    <string name="idle_multiplier">Wachttijd</string>
+    <string name="idle_multiplier_body">Hoeveel keer je gebruikelijke tijd per pagina er gewacht wordt voor de pauze (minimaal 1 minuut, maximaal 10).</string>
+    <string name="idle_multiplier_value">%1$.1f×</string>
+    <string name="idle_prompt">Vraag “Ben je nog aan het lezen?”</string>
+    <string name="idle_prompt_body">Uit pauzeert stilletjes; de volgende paginawissel of tik gaat weer verder.</string>
 </resources>

@@ -90,6 +90,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -127,7 +128,8 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
     val speedSettings by vm.speedSettings.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val layout = rememberDeviceLayout()
-    val systemDark = isSystemInDarkTheme()
+    val themeMode by vm.themeMode.collectAsStateWithLifecycle()
+    val systemDark = themeMode.isDark(isSystemInDarkTheme())
     val theme = settings.effectiveTheme(systemDark)
     val bg = Color(theme.bg)
     val fg = Color(theme.fg)
@@ -245,7 +247,18 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
         battery = battery,
     )
 
-    Box(Modifier.fillMaxSize().background(bg)) {
+    Box(
+        Modifier.fillMaxSize().background(bg)
+            // Every touch counts as reading (scroll, select, menus); it never consumes the event.
+            .pointerInput(vm) {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        vm.onTouch()
+                    }
+                }
+            }
+    ) {
         val tabletop = layout.isTabletop && state.ready != null
         Column(Modifier.fillMaxSize()) {
             // Page area (top half in tabletop posture)
@@ -354,6 +367,13 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
             Snackbar(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(16.dp)) { Text(m) }
         }
     }
+
+    if (state.idlePaused && settings.idlePrompt) AlertDialog(
+        onDismissRequest = vm::resumeFromIdle,
+        title = { Text(stringResource(R.string.idle_title)) },
+        text = { Text(stringResource(R.string.idle_body)) },
+        confirmButton = { TextButton(onClick = vm::resumeFromIdle) { Text(stringResource(R.string.idle_continue)) } },
+    )
 
     if (showSettings) ReaderSettingsSheet(settings, vm::updateSettings, onDismiss = { showSettings = false })
     if (showContents) ContentsSheet(

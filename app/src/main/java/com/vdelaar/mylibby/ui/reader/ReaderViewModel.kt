@@ -19,6 +19,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -49,6 +51,8 @@ data class ReaderUiState(
     val message: String? = null,
     val bridgeReady: Boolean = false,
     val opened: Boolean = false,
+    /** The reading timer is paused because nothing has happened for a while (see [ReadingClock]). */
+    val idlePaused: Boolean = false,
 )
 
 data class SpeedUiState(
@@ -71,6 +75,11 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
     val state: StateFlow<ReaderUiState> = _state.asStateFlow()
 
     val settings = c.settings.reader
+
+    /** The app's Light / Dark / System choice; the reader's dark page follows it. */
+    val themeMode: StateFlow<com.vdelaar.mylibby.core.datastore.ThemeMode> =
+        c.settings.app.map { it.themeMode }.distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, c.settings.app.value.themeMode)
     val ttsState = c.tts.state
     val annotations: StateFlow<List<AnnotationEntity>> = c.reading.observeAnnotations(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val bookmarks: StateFlow<List<BookmarkEntity>> = c.reading.observeBookmarks(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -114,8 +123,12 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
     private var sessionStart = 0L
     private var sessionStartProgress = 0f
     private var sessionStartCfi: String? = null
-    private var activeMs = 0L
-    private var lastActivity = 0L
+    private val clock = ReadingClock(
+        enabled = { c.settings.reader.value.idleDetection },
+        multiplier = { c.settings.reader.value.idleMultiplier },
+    )
+    private var idleJob: Job? = null
+    private var lastTouch = 0L
     private var bytesRead = 0.0
     private var pagesTurned = 0
     private var listenedMs = 0L
@@ -263,15 +276,19 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
         markActivity()
         if (prev != null) {
             val delta = e.fraction - prev.fraction
-            val pageMs = (now - pageStart).coerceIn(0, 180_000)
+            val rawPageMs = now - pageStart
+            // A page that sat open until the timer paused says nothing about how long it takes to read.
+            val idlePage = clock.wasIdle()
+            val pageMs = rawPageMs.coerceIn(0, 180_000)
             val forward = delta > 0 && delta < 0.02
             val listening = c.tts.state.value.status != TtsStatus.IDLE
             val speedReading = _speedRead.value.active
             if (forward && !listening && !speedReading) {
+                clock.pageTurned(rawPageMs)
                 pagesTurned++
                 bytesRead += delta * (_state.value.ready?.totalBytes ?: 0L)
             }
-            if (pageMs > 1500 && c.tts.state.value.status != TtsStatus.PLAYING && !speedReading) {
+            if (pageMs > 1500 && !idlePage && c.tts.state.value.status != TtsStatus.PLAYING && !speedReading) {
                 val finished = e.sectionIndex == prev.sectionIndex + 1 && forward
                 viewModelScope.launch {
                     c.stats.addSectionTime(bookId, prev.sectionIndex, prev.tocLabel, pageMs / 1000, if (forward) 1 else 0, finished)
@@ -306,32 +323,56 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
         sessionStart = System.currentTimeMillis()
         sessionStartProgress = (e.fraction * 100).toFloat()
         sessionStartCfi = e.cfi
-        activeMs = 0
+        clock.start(sessionStart)
+        startIdleWatch()
         bytesRead = 0.0
         pagesTurned = 0
         listenedMs = 0
         speedMs = 0
         speedWordsRead = 0
-        lastActivity = sessionStart
         pageStart = sessionStart
     }
 
     private fun markActivity() {
+        clock.interaction(System.currentTimeMillis())
+        if (_state.value.idlePaused) _state.update { it.copy(idlePaused = false) }
+    }
+
+    /** Any touch in the reader counts as reading, so scrolling, selecting and menus keep the timer going. */
+    fun onTouch() {
         val now = System.currentTimeMillis()
-        if (lastActivity > 0) {
-            val gap = now - lastActivity
-            if (gap in 1..IDLE_LIMIT_MS) activeMs += gap
-            else if (gap > IDLE_LIMIT_MS) activeMs += 15_000 // the user probably read part of that page
+        if (!sessionOpen || now - lastTouch < 1000) return
+        lastTouch = now
+        markActivity()
+    }
+
+    /** "Yes, still reading": continue without counting the idle time. */
+    fun resumeFromIdle() {
+        clock.resume(System.currentTimeMillis())
+        _state.update { it.copy(idlePaused = false) }
+    }
+
+    private fun startIdleWatch() {
+        idleJob?.cancel()
+        idleJob = viewModelScope.launch {
+            while (isActive) {
+                delay(5_000)
+                // Listening and speed reading keep the clock going themselves.
+                val busy = c.tts.state.value.status == TtsStatus.PLAYING || _speedRead.value.playing
+                if (!busy && clock.tick(System.currentTimeMillis())) _state.update { it.copy(idlePaused = true) }
+            }
         }
-        lastActivity = now
     }
 
     /** Called when the reader goes to the background or closes. */
     fun flushSession() {
         if (!sessionOpen) return
-        markActivity()
+        clock.finish(System.currentTimeMillis())
+        idleJob?.cancel()
+        _state.update { it.copy(idlePaused = false) }
         sessionOpen = false
         val loc = lastLocation ?: return
+        val activeMs = clock.activeMs
         val seconds = (activeMs / 1000).toInt()
         val p = (loc.fraction * 100).toFloat()
         val book = _state.value.book ?: return
@@ -728,7 +769,6 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
     }
 
     private companion object {
-        const val IDLE_LIMIT_MS = 120_000L
         const val MIN_SESSION_SECONDS = 20
     }
 }
