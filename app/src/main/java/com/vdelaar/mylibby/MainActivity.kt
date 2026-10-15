@@ -58,10 +58,21 @@ class MainActivity : ComponentActivity() {
                 controller.isAppearanceLightNavigationBars = !dark
                 onDispose { }
             }
+            LocalNetworkPrompt()
             MyLibbyTheme(darkTheme = dark, dynamicColor = app.dynamicColor) {
                 AppNavHost()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        com.vdelaar.mylibby.core.network.LocalNetwork.uiVisible = true
+    }
+
+    override fun onPause() {
+        com.vdelaar.mylibby.core.network.LocalNetwork.uiVisible = false
+        super.onPause()
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
@@ -106,5 +117,16 @@ class MainActivity : ComponentActivity() {
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
         if (VolumeKeys.handler != null && (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) return true
         return super.onKeyUp(keyCode, event)
+    }
+}
+
+/** Shows the "Nearby devices" dialog when a request to a home-network server needs it (Android 17+). */
+@androidx.compose.runtime.Composable
+private fun LocalNetworkPrompt() {
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
+        com.vdelaar.mylibby.core.network.LocalNetwork.answered(it)
+    }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        com.vdelaar.mylibby.core.network.LocalNetwork.asks.collect { launcher.launch(com.vdelaar.mylibby.core.network.LocalNetwork.PERMISSION) }
     }
 }

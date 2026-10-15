@@ -65,6 +65,8 @@ class ApiProvider(
                 if (!isOnline() && !isLoopback(chain.request().url)) throw java.io.IOException(com.vdelaar.mylibby.core.str(com.vdelaar.mylibby.R.string.err_no_network))
                 chain.proceed(chain.request())
             }
+            // Android 17: a home-network server needs the "Nearby devices" permission; ask, wait, and explain a refusal.
+            .addInterceptor(LocalNetwork.interceptor)
             .apply {
                 if (BuildConfig.DEBUG) {
                     addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })

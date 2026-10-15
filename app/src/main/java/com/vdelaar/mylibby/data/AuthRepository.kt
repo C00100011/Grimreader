@@ -42,7 +42,7 @@ class AuthRepository(
     val oidcError: StateFlow<String?> = _oidcError.asStateFlow()
 
     private val json = Json { ignoreUnknownKeys = true }
-    private val plainClient by lazy { OkHttpClient.Builder().addInterceptor(com.vdelaar.mylibby.core.debug.NetworkLogInterceptor("Sign-in")).build() }
+    private val plainClient by lazy { OkHttpClient.Builder().addInterceptor(com.vdelaar.mylibby.core.debug.NetworkLogInterceptor("Sign-in")).addInterceptor(com.vdelaar.mylibby.core.network.LocalNetwork.interceptor).build() }
 
     /**
      * Starts single sign-on (OIDC with PKCE) against Grimmory. Returns the address to open in the browser,

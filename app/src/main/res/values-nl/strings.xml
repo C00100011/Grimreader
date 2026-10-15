@@ -130,6 +130,7 @@
     <string name="err_login_generic">Inloggen mislukt: %1$s</string>
     <string name="err_login_http">Inloggen mislukt (HTTP %1$d)</string>
     <string name="err_no_network">Geen netwerkverbinding</string>
+    <string name="err_local_network">Je thuisnetwerk is niet bereikbaar. Sta \"Apparaten in de buurt\" toe voor Grimreader in de app-instellingen van je telefoon (Rechten) en probeer het opnieuw.</string>
     <string name="err_password_disabled">Inloggen met wachtwoord staat uit op deze Shelfmark. Gebruik single sign-on.</string>
     <string name="err_reach_shelfmark">Shelfmark is niet bereikbaar. Controleer het adres en of de server draait.</string>
     <string name="err_request">Aanvraag mislukt</string>

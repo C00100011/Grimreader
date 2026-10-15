@@ -119,6 +119,11 @@ class ConnectionProbe(private val c: AppContainer) {
         }
         if (addresses.isEmpty()) return ProbeResult(target, base.host, steps)
 
+        if (com.vdelaar.mylibby.core.network.LocalNetwork.supported && addresses.any { it.isSiteLocalAddress || it.isLinkLocalAddress } || base.host.endsWith(".local")) {
+            val ok = com.vdelaar.mylibby.core.network.LocalNetwork.granted(com.vdelaar.mylibby.core.AppStrings.context)
+            steps += ProbeStep("Nearby devices permission", ok, if (ok) "allowed" else "NOT allowed: Android 17 blocks the home network until it is allowed in the app's permissions")
+        }
+
         // 2. TCP connection
         val tcpStart = System.nanoTime()
         val tcp = runCatching { Socket().use { it.connect(InetSocketAddress(addresses.first(), base.port), 6_000) } }
