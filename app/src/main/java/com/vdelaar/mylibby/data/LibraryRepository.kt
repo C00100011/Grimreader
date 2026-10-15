@@ -18,7 +18,6 @@ import com.vdelaar.mylibby.core.network.BookReviewDto
 import com.vdelaar.mylibby.core.network.PersonalRatingRequest
 import com.vdelaar.mylibby.core.network.ShelfCreateRequest
 import com.vdelaar.mylibby.core.network.ShelvesAssignmentRequest
-import com.vdelaar.mylibby.core.network.UpdateStatusRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -70,7 +69,7 @@ class LibraryRepository(
     private suspend fun serverPage(filter: LibraryFilter, page: Int, pageSize: Int): BookPage {
         try {
             val shelfId = if (filter.favouritesOnly) ensureFavouritesShelf() else null
-            val res = api.grimmory().books(
+            val res = api.catalog().books(
                 page = page,
                 size = pageSize,
                 sort = filter.sort,
@@ -135,7 +134,7 @@ class LibraryRepository(
             return@withContext HomeData(reading, emptyList(), offline = false)
         }
         try {
-            val g = api.grimmory()
+            val g = api.catalog()
             // continue-reading misses books whose progress came in through the per-file progress
             // API, so merge it with books currently marked as reading.
             val reading = runCatching {
@@ -159,7 +158,7 @@ class LibraryRepository(
     suspend fun detail(id: Long): Book = withContext(Dispatchers.IO) {
         if (id < 0) return@withContext db.localBooks().get(id)?.toBook() ?: error("Book not found")
         try {
-            val dto = api.grimmory().bookDetail(id)
+            val dto = api.catalog().bookDetail(id)
             val book = dto.toBook()
             cache(listOf(book))
             // Keep favourites in sync with the server's shelf membership.
@@ -180,7 +179,7 @@ class LibraryRepository(
     fun observeBook(id: Long): Flow<com.vdelaar.mylibby.core.database.BookEntity?> = db.books().observe(id)
 
     suspend fun filterOptions(): FilterOptions = withContext(Dispatchers.IO) {
-        val o = api.grimmory().filterOptions()
+        val o = api.catalog().filterOptions()
         FilterOptions(
             authors = o.authors.map { it.name to it.count },
             series = o.series.map { it.name to it.count },
@@ -194,7 +193,7 @@ class LibraryRepository(
         val q = search?.trim().orEmpty()
         if (settings.app.value.noServer) return@withContext seriesOf(localBooks(), q)
         try {
-            api.grimmory().series(0, 60, q.ifBlank { null }).content.map {
+            api.catalog().series(0, 60, q.ifBlank { null }).content.map {
                 SeriesInfo(
                     name = it.seriesName,
                     bookCount = it.bookCount,
@@ -217,7 +216,7 @@ class LibraryRepository(
         val q = search?.trim().orEmpty()
         if (settings.app.value.noServer) return@withContext authorsOf(localBooks(), q)
         try {
-            api.grimmory().authors(search = q.ifBlank { null }).content
+            api.catalog().authors(search = q.ifBlank { null }).content
         } catch (e: Exception) {
             val cached = db.books().search("").map { it.toBook() }
             if (cached.isEmpty()) throw e
@@ -229,7 +228,7 @@ class LibraryRepository(
 
     suspend fun seriesBooks(name: String): List<Book> = withContext(Dispatchers.IO) {
         try {
-            val books = api.grimmory().seriesBooks(name).content.map { it.toBook() }
+            val books = api.catalog().seriesBooks(name).content.map { it.toBook() }
                 .sortedBy { it.seriesNumber ?: Float.MAX_VALUE }
             cache(books)
             books
@@ -276,7 +275,7 @@ class LibraryRepository(
             val all = mutableListOf<Book>()
             var page = 0
             do {
-                val res = api.grimmory().books(page = page, size = 100, shelfId = shelfId)
+                val res = api.catalog().books(page = page, size = 100, shelfId = shelfId)
                 all += res.content.map { it.toBook() }
                 page++
             } while (res.hasNext && page < 20)
@@ -346,7 +345,7 @@ class LibraryRepository(
         }
         db.books().get(bookId)?.let { db.books().upsertAll(listOf(it.copy(readStatus = status))) }
         try {
-            val r = api.grimmory().updateStatus(bookId, UpdateStatusRequest(status))
+            val r = api.catalog().updateStatus(bookId, status)
             if (!r.isSuccessful) error("HTTP ${r.code()}")
         } catch (_: Exception) {
             db.outbox().insert(OutboxEntity(type = OutboxType.STATUS, bookId = bookId, payload = status))
@@ -427,7 +426,7 @@ class LibraryRepository(
 
         fun score(b: Book) = b.categories.sumOf { weights[it]?.coerceAtLeast(0.0) ?: 0.0 }
         val candidates = try {
-            val g = api.grimmory()
+            val g = api.catalog()
             top.flatMap { genre ->
                 runCatching { g.books(size = 30, sort = "addedOn", dir = "desc", category = listOf(genre), status = listOf("UNREAD")).content.map { it.toBook() } }
                     .getOrDefault(emptyList())

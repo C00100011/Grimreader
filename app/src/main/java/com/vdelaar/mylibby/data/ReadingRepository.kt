@@ -42,7 +42,7 @@ class ReadingRepository(
     suspend fun startPosition(bookId: Long): StartPosition = withContext(Dispatchers.IO) {
         val local = db.progress().get(bookId)
         // Local-only books never talk to Grimmory.
-        val server = if (bookId < 0) null else runCatching { api.grimmory().bookProgress(bookId) }.getOrNull()
+        val server = if (bookId < 0) null else runCatching { api.catalog().bookProgress(bookId) }.getOrNull()
         val serverCfi = server?.epubProgress?.cfi
         val serverTime = parseInstant(server?.epubProgress?.updatedAt ?: server?.lastReadTime)
         val serverPercent = server?.epubProgress?.percentage ?: server?.readProgress ?: 0f
@@ -117,7 +117,7 @@ class ReadingRepository(
     internal suspend fun pushOne(p: ProgressEntity): Boolean {
         val fileId = p.bookFileId ?: return true.also { db.progress().markClean(p.bookId, p.updatedAt) }
         return try {
-            val r = api.grimmory().updateProgress(
+            val r = api.catalog().updateProgress(
                 p.bookId,
                 UpdateProgressRequest(
                     fileProgress = FileProgressDto(
