@@ -131,6 +131,7 @@
     <string name="err_login_generic">Login failed: %1$s</string>
     <string name="err_login_http">Login failed (HTTP %1$d)</string>
     <string name="err_no_network">No network connection</string>
+    <string name="err_local_network">Can\'t reach your home network. Allow \"Nearby devices\" for Grimreader in the phone\'s app settings (Permissions), then try again.</string>
     <string name="err_password_disabled">Password login is disabled on this Shelfmark. Use single sign-on.</string>
     <string name="err_reach_shelfmark">Could not reach Shelfmark. Check the address and that the server is running.</string>
     <string name="err_request">Request failed</string>
