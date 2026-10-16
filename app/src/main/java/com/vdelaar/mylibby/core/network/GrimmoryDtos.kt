@@ -170,6 +170,7 @@ data class BookProgressResponseDto(
     val readStatus: String? = null,
     val lastReadTime: String? = null,
     val epubProgress: EpubProgressDto? = null,
+    val koreaderProgress: KoreaderProgressDto? = null,
 )
 
 @Serializable
