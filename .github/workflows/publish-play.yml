@@ -1,0 +1,122 @@
+name: Publish to Play Store
+run-name: Publish ${{ inputs.target }}${{ inputs.dry_run && ' (dry run)' || '' }}
+
+# Manual. Run it from the branch you want to publish:
+#   development -> uploads the latest development bundle to the Alpha track
+#   main        -> uploads the latest release bundle to Production (switched off, see the last step)
+# Release notes are made from the bodies of the pull requests since the previous successful run for that track
+# (Production: since the previous release).
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Where to publish"
+        type: choice
+        options: [alpha, production]
+        default: alpha
+      dry_run:
+        description: "Only build the release notes, do not upload"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read      # find and download the bundle that the build workflow made
+
+concurrency:
+  group: publish-play
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Your existing environments: "development" for Alpha, "release" for Production. Each holds PLAY_SERVICE_ACCOUNT_JSON.
+    environment: ${{ inputs.target == 'alpha' && 'development' || 'release' }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LOCALE: ${{ vars.PLAY_NOTES_LOCALE || 'en-US' }}
+    steps:
+      - name: Check branch
+        run: |
+          want=development; [ "${{ inputs.target }}" = production ] && want=main
+          if [ "$GITHUB_REF_NAME" != "$want" ]; then
+            echo "::error::Publishing to ${{ inputs.target }} must be run from the $want branch (this is $GITHUB_REF_NAME)."; exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # history and tags, to list the pull requests since the last upload
+
+      - name: Find the bundle and the starting point
+        id: find
+        run: |
+          mkdir -p out
+          if [ "${{ inputs.target }}" = alpha ]; then
+            # The bundle the build workflow made for exactly this commit.
+            RUN=$(gh run list --workflow build-apk.yml --branch development --event push --commit "$GITHUB_SHA" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+            if [ -z "$RUN" ]; then
+              echo "::error::No successful build for the latest development commit ($GITHUB_SHA). Wait for the build workflow to finish (or re-run it) and try again."; exit 1
+            fi
+            gh run download "$RUN" -n grimreader-closed-test-aab -D out
+            HEAD_REF="$GITHUB_SHA"
+            # Notes start after the last successful upload to Alpha, or after the last release when there was none.
+            # (The run title is "Publish alpha" for a real run; a dry run's title says so and is not matched.)
+            BASE=$(gh run list --workflow publish-play.yml --status success --limit 50 --json displayTitle,headSha -q '[.[] | select(.displayTitle=="Publish alpha")][0].headSha // empty')
+            [ -z "$BASE" ] && BASE=$(git tag --list --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+            [ -z "$BASE" ] && BASE=$(git rev-list --max-parents=0 HEAD | tail -n1)
+          else
+            # The newest release; notes cover everything since the release before it.
+            TAGS=$(git tag --list --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$')
+            HEAD_REF=$(echo "$TAGS" | sed -n 1p)
+            BASE=$(echo "$TAGS" | sed -n 2p)
+            [ -z "$BASE" ] && BASE=$(git rev-list --max-parents=0 HEAD | tail -n1)
+            gh release download "$HEAD_REF" --pattern '*.aab' -D out
+          fi
+          AAB=$(ls out/*.aab | head -n1)
+          VERSION=$(basename "$AAB" .aab); VERSION=${VERSION#Grimreader-}
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD_REF" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing $AAB ($VERSION); release notes from $BASE to $HEAD_REF"
+
+      - name: Release notes from the pull requests
+        run: |
+          python3 .github/scripts/release_notes.py "${{ steps.find.outputs.base }}" "${{ steps.find.outputs.head }}" notes "$LOCALE"
+          {
+            echo "## Release notes for ${{ steps.find.outputs.version }} (${{ inputs.target }}${{ inputs.dry_run && ', dry run' || '' }})"
+            echo
+            echo "### Play text (what users see)"
+            echo '```'; cat "notes/whatsnew/whatsnew-$LOCALE"; echo; echo '```'
+            echo
+            cat notes/notes.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload to Play Console (Alpha)
+        if: ${{ !inputs.dry_run && inputs.target == 'alpha' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.vdelaar.mylibby
+          releaseFiles: out/*.aab
+          releaseName: ${{ steps.find.outputs.version }}
+          whatsNewDirectory: notes/whatsnew
+          track: alpha
+          status: completed
+
+      # Not active yet: Production. Remove the # on the lines below to switch it on. It needs PLAY_SERVICE_ACCOUNT_JSON
+      # in the "release" environment.
+      # - name: Upload to Play Console (Production)
+      #   if: ${{ !inputs.dry_run && inputs.target == 'production' }}
+      #   uses: r0adkll/upload-google-play@v1
+      #   with:
+      #     serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      #     packageName: com.vdelaar.mylibby
+      #     releaseFiles: out/*.aab
+      #     releaseName: ${{ steps.find.outputs.version }}
+      #     whatsNewDirectory: notes/whatsnew
+      #     track: production
+      #     status: completed
+
+      - name: Production is switched off
+        if: ${{ !inputs.dry_run && inputs.target == 'production' }}
+        run: echo "::warning::The Production upload is commented out in publish-play.yml, nothing was uploaded."
