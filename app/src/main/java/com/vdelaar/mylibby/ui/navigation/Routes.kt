@@ -13,9 +13,11 @@ import kotlinx.serialization.Serializable
 @Serializable data object SwipeRoute
 @Serializable data object WantedRoute
 @Serializable data object DownloadsRoute
+@Serializable data object AiNotesRoute
 @Serializable data object SuggestionsRoute
 @Serializable data class OpdsRoute(val url: String = "")
 @Serializable data object LibrariesRoute
+@Serializable data object DebugRoute
 
 enum class Tab(@androidx.annotation.StringRes val label: Int) {
     HOME(com.vdelaar.mylibby.R.string.tab_home),

@@ -82,6 +82,11 @@ data class ReaderSettings(
     val footerCenter: InfoItem = InfoItem.NONE,
     val footerRight: InfoItem = InfoItem.PERCENT_BOOK,
     val progressScope: ProgressScope = ProgressScope.BOOK,
+    /** Pause the reading timer when nothing happens for [idleMultiplier] times the usual time per page (issue #10). */
+    val idleDetection: Boolean = true,
+    val idleMultiplier: Float = 2f,
+    /** Ask "Are you still reading?" when the timer pauses; off pauses silently. */
+    val idlePrompt: Boolean = true,
 )
 
 enum class SpeedMode { WORD, PHRASE }
@@ -155,7 +160,12 @@ data class SyncSettings(
     val reasserted: Map<Long, Long> = emptyMap(),
 )
 
-enum class ThemeMode { SYSTEM, LIGHT, DARK }
+enum class ThemeMode {
+    SYSTEM, LIGHT, DARK;
+
+    /** Whether the app (and the reader's "dark page" option) is dark: the app's own choice wins over the system's. */
+    fun isDark(systemDark: Boolean) = when (this) { SYSTEM -> systemDark; LIGHT -> false; DARK -> true }
+}
 
 @Serializable
 data class Profile(

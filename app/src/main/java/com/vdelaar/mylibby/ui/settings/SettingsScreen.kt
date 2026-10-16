@@ -24,6 +24,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.LocalFireDepartment
@@ -117,6 +119,7 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
             TopAppBar(
                 title = { Text(stringResource(page?.title ?: R.string.settings)) },
                 navigationIcon = { IconButton(onClick = { if (backToOverview) pageName = null else navigator.back() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.action_back)) } },
+                actions = { IconButton(onClick = navigator::debug) { Icon(Icons.Rounded.BugReport, stringResource(R.string.debug_title)) } },
                 scrollBehavior = scroll,
             )
         },
@@ -171,6 +174,17 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
                         SettingsSwitchRow(stringResource(R.string.tap_edges), icon = Icons.Rounded.TouchApp, checked = reader.tapToTurn, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(tapToTurn = v) } } })
                         SettingsSwitchRow(stringResource(R.string.volume_keys), icon = Icons.AutoMirrored.Rounded.VolumeUp, checked = reader.volumeKeysTurn, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(volumeKeysTurn = v) } } })
                         SettingsSwitchRow(stringResource(R.string.keep_screen_on), checked = reader.keepScreenOn, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(keepScreenOn = v) } } })
+                        SettingsSwitchRow(stringResource(R.string.idle_detection), stringResource(R.string.idle_detection_body), checked = reader.idleDetection, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(idleDetection = v) } } })
+                        if (reader.idleDetection) {
+                            SettingsRow(stringResource(R.string.idle_multiplier), stringResource(R.string.idle_multiplier_body)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    TextButton(onClick = { scope.launch { c.settings.updateReader { it.copy(idleMultiplier = (it.idleMultiplier - 0.5f).coerceAtLeast(1.5f)) } } }) { Text("–") }
+                                    Text(stringResource(R.string.idle_multiplier_value, reader.idleMultiplier))
+                                    TextButton(onClick = { scope.launch { c.settings.updateReader { it.copy(idleMultiplier = (it.idleMultiplier + 0.5f).coerceAtMost(4f)) } } }) { Text("+") }
+                                }
+                            }
+                            SettingsSwitchRow(stringResource(R.string.idle_prompt), stringResource(R.string.idle_prompt_body), checked = reader.idlePrompt, onCheckedChange = { v -> scope.launch { c.settings.updateReader { it.copy(idlePrompt = v) } } })
+                        }
                         Text(
                             stringResource(R.string.reader_settings_hint),
                             style = MaterialTheme.typography.bodySmall,
@@ -254,6 +268,13 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
                                 })
                         }
                         SettingsRow(stringResource(R.string.downloaded_books), Formatter.formatShortFileSize(context, storage), Icons.Rounded.Storage, onClick = navigator::downloads)
+                        val aiNotes by c.db.bookChunks().observeStats().collectAsStateWithLifecycle(emptyList())
+                        SettingsRow(
+                            stringResource(R.string.ai_notes),
+                            if (aiNotes.isEmpty()) stringResource(R.string.ai_notes_sub_empty)
+                            else pluralStringResource(R.plurals.ai_notes_summary, aiNotes.size, aiNotes.size, Formatter.formatShortFileSize(context, aiNotes.sumOf { it.bytes })),
+                            Icons.Rounded.AutoAwesome, onClick = navigator::aiNotes,
+                        )
                         SettingsRow(stringResource(R.string.clear_cache), stringResource(R.string.clear_cache_body), Icons.Rounded.Delete, onClick = {
                             scope.launch { c.downloads.clearStreamCache(); snackbar.showSnackbar(clearedMsg) }
                         })

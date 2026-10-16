@@ -1,7 +1,7 @@
 name: Test and Build Grimreader
 
-# main         -> test, version from conventional commits, signed APK + AAB attached to a GitHub release (Play versionCode X*1000)
-# development  -> test, signed AAB for the Play Console closed test (Play versionCode lastRelease*1000 + 1..999)
+# main         -> test, version from conventional commits, signed APK + AAB attached to a GitHub release (Play versionCode X*1000); Play upload: manual "Publish to Play Store" workflow
+# development  -> test, signed AAB kept as an artifact (Play versionCode lastRelease*1000 + 1..999)
 # any other    -> test, debug APK as artifact; package id gets ".test" so it can never collide with the Play app
 on:
   push:
@@ -122,7 +122,7 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-  # Development: signed AAB to upload by hand as a Play Console closed test.
+  # Development: signed AAB, kept as an artifact. Uploading it to Play is the manual "Publish to Play Store" workflow.
   build-closed-test:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'

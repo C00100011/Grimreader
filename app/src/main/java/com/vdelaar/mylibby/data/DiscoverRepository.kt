@@ -126,6 +126,7 @@ class DiscoverRepository(
             OkHttpClient.Builder()
                 .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
                 .readTimeout(25, java.util.concurrent.TimeUnit.SECONDS)
+                .addInterceptor(com.vdelaar.mylibby.core.debug.NetworkLogInterceptor { url -> if (url.host.contains("openlibrary")) "Open Library" else "Discover" })
                 .addInterceptor { chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", USER_AGENT).build()) }
                 .build()
         }

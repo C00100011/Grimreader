@@ -78,7 +78,6 @@ ksp {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.core.splashscreen)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
@@ -122,6 +121,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.coil.compose)
     implementation(libs.onnxruntime.android)
+    implementation(libs.mlkit.genai.prompt)
     implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.junit)

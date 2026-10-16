@@ -136,6 +136,21 @@ data class BookTextStatsEntity(
     val totalWords: Long,
 )
 
+/** A stretch of a book's text for the on-device AI chat; [summary] is filled in as the reader gets that far. */
+@Entity(tableName = "book_chunks", primaryKeys = ["bookId", "idx"])
+data class BookChunkEntity(
+    val bookId: Long,
+    val idx: Int,
+    val section: String,
+    /** The section's place in the book's reading order (what the reader reports as its section index). A chunk never spans two sections. */
+    val spineIndex: Int,
+    /** Where the chunk starts and ends inside that section, 0..1 of its text. */
+    val startShare: Float,
+    val endShare: Float,
+    val text: String,
+    val summary: String?,
+)
+
 enum class OutboxType { FAVOURITE_ADD, FAVOURITE_REMOVE, STATUS, RATING }
 
 @Entity(tableName = "outbox")

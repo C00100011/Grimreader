@@ -23,6 +23,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
@@ -50,7 +51,7 @@ import com.vdelaar.mylibby.core.datastore.ReaderSettings
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReaderInfoSheet(settings: ReaderSettings, update: ((ReaderSettings) -> ReaderSettings) -> Unit, onDismiss: () -> Unit) {
-    val theme = settings.effectiveTheme(isSystemInDarkTheme())
+    val theme = settings.effectiveTheme(MaterialTheme.colorScheme.background.luminance() < 0.5f)
     val sample = InfoData(
         bookTitle = "The Time Machine",
         author = "H. G. Wells",

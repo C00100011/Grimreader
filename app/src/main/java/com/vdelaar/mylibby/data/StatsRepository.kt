@@ -117,21 +117,7 @@ class StatsRepository(
         for (s in db.sessions().unsynced()) {
             if (s.bookId < 0) { db.sessions().markSynced(s.id); continue } // local-only book
             try {
-                val r = g.recordSession(
-                    ReadingSessionRequest(
-                        bookId = s.bookId,
-                        bookType = s.bookType,
-                        startTime = Instant.ofEpochMilli(s.startTime).toString(),
-                        endTime = Instant.ofEpochMilli(s.endTime).toString(),
-                        durationSeconds = s.durationSeconds,
-                        durationFormatted = formatDuration(s.durationSeconds.toLong()),
-                        startProgress = s.startProgress,
-                        endProgress = s.endProgress,
-                        progressDelta = s.endProgress - s.startProgress,
-                        startLocation = s.startCfi,
-                        endLocation = s.endCfi,
-                    )
-                )
+                val r = g.recordSession(s.toRequest())
                 if (r.isSuccessful || r.code() in 400..404) db.sessions().markSynced(s.id) else ok = false
             } catch (_: Exception) {
                 ok = false
@@ -180,3 +166,20 @@ fun formatMinutes(minutes: Double): String {
         else -> strOr(R.string.min_m, "%1${'$'}d min", m)
     }
 }
+
+internal fun ReadingSessionEntity.toRequest() = ReadingSessionRequest(
+    bookId = bookId,
+    bookType = bookType,
+    startTime = Instant.ofEpochMilli(startTime).toString(),
+    endTime = Instant.ofEpochMilli(endTime).toString(),
+    durationSeconds = durationSeconds,
+    durationFormatted = formatDuration(durationSeconds.toLong()),
+    startProgress = startProgress.round2(),
+    endProgress = endProgress.round2(),
+    progressDelta = (endProgress - startProgress).round2(),
+    startLocation = startCfi,
+    endLocation = endCfi,
+)
+
+/** Grimmory keeps session progress to two decimals; sending more only adds noise. */
+private fun Float.round2(): Float = Math.round(this * 100f) / 100f

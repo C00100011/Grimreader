@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.RecordVoiceOver
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
@@ -89,6 +90,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -126,7 +128,8 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
     val speedSettings by vm.speedSettings.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val layout = rememberDeviceLayout()
-    val systemDark = isSystemInDarkTheme()
+    val themeMode by vm.themeMode.collectAsStateWithLifecycle()
+    val systemDark = themeMode.isDark(isSystemInDarkTheme())
     val theme = settings.effectiveTheme(systemDark)
     val bg = Color(theme.bg)
     val fg = Color(theme.fg)
@@ -134,6 +137,8 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var showContents by rememberSaveable { mutableStateOf(false) }
     var showSearch by rememberSaveable { mutableStateOf(false) }
+    var showAsk by rememberSaveable { mutableStateOf(false) }
+    val chat by vm.chat.state.collectAsStateWithLifecycle()
     var noteFor by remember { mutableStateOf<AnnotationEntity?>(null) }
     var noteForSelection by rememberSaveable { mutableStateOf(false) }
 
@@ -242,7 +247,18 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
         battery = battery,
     )
 
-    Box(Modifier.fillMaxSize().background(bg)) {
+    Box(
+        Modifier.fillMaxSize().background(bg)
+            // Every touch counts as reading (scroll, select, menus); it never consumes the event.
+            .pointerInput(vm) {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        vm.onTouch()
+                    }
+                }
+            }
+    ) {
         val tabletop = layout.isTabletop && state.ready != null
         Column(Modifier.fillMaxSize()) {
             // Page area (top half in tabletop posture)
@@ -273,6 +289,7 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
                 onBack = onBack,
                 onBookmark = vm::toggleBookmark,
                 onSearch = { showSearch = true },
+                onAsk = if (chat.offered) ({ showAsk = true; vm.chat.open() }) else null,
             )
         }
         AnimatedVisibility(
@@ -351,6 +368,13 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
         }
     }
 
+    if (state.idlePaused && settings.idlePrompt) AlertDialog(
+        onDismissRequest = vm::resumeFromIdle,
+        title = { Text(stringResource(R.string.idle_title)) },
+        text = { Text(stringResource(R.string.idle_body)) },
+        confirmButton = { TextButton(onClick = vm::resumeFromIdle) { Text(stringResource(R.string.idle_continue)) } },
+    )
+
     if (showSettings) ReaderSettingsSheet(settings, vm::updateSettings, onDismiss = { showSettings = false })
     if (showContents) ContentsSheet(
         toc = state.ready?.toc.orEmpty(),
@@ -360,6 +384,17 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
         onGo = { target -> vm.goTo(target); showContents = false; vm.hideChrome() },
         onDeleteBookmark = { vm.deleteBookmark(it) },
         onDismiss = { showContents = false },
+    )
+    if (showAsk && chat.offered) AskBookSheet(
+        chat = chat,
+        chapter = state.location?.tocLabel.orEmpty(),
+        percent = ((state.location?.fraction ?: 0.0) * 100).toInt(),
+        onAsk = vm.chat::ask,
+        onDownload = vm.chat::download,
+        onRetry = vm.chat::retryIndexing,
+        onClearConversation = vm.chat::clearConversation,
+        onDeleteIndex = vm.chat::deleteIndex,
+        onDismiss = { showAsk = false; vm.chat.close() },
     )
     if (showSearch) SearchSheet(
         results = state.searchResults,
@@ -420,7 +455,7 @@ private fun LoadingOverlay(state: ReaderUiState, bg: Color, fg: Color, onBack: (
 }
 
 @Composable
-private fun TopChrome(title: String, chapter: String, bookmarked: Boolean, onBack: () -> Unit, onBookmark: () -> Unit, onSearch: () -> Unit) {
+private fun TopChrome(title: String, chapter: String, bookmarked: Boolean, onBack: () -> Unit, onBookmark: () -> Unit, onSearch: () -> Unit, onAsk: (() -> Unit)? = null) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shadowElevation = 3.dp) {
         Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.close_book)) }
@@ -428,6 +463,7 @@ private fun TopChrome(title: String, chapter: String, bookmarked: Boolean, onBac
                 Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (chapter.isNotBlank()) Text(chapter, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            onAsk?.let { ask -> IconButton(onClick = ask) { Icon(Icons.Rounded.AutoAwesome, stringResource(R.string.ask_about_book)) } }
             IconButton(onClick = onSearch) { Icon(Icons.Rounded.Search, stringResource(R.string.search_in_book)) }
             IconButton(onClick = onBookmark) {
                 Icon(if (bookmarked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder, stringResource(if (bookmarked) R.string.remove_bookmark else R.string.bookmark_page))

@@ -58,11 +58,15 @@ class ApiProvider(
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .applyPinnedTrust()
+            // First, so failures of the interceptors below (no network) are recorded too.
+            .addInterceptor(com.vdelaar.mylibby.core.debug.NetworkLogInterceptor { url -> sourceOf(url) })
             // Fail fast without a network instead of waiting for connect timeouts.
             .addInterceptor { chain ->
                 if (!isOnline() && !isLoopback(chain.request().url)) throw java.io.IOException(com.vdelaar.mylibby.core.str(com.vdelaar.mylibby.R.string.err_no_network))
                 chain.proceed(chain.request())
             }
+            // Android 17: a home-network server needs the "Nearby devices" permission; ask, wait, and explain a refusal.
+            .addInterceptor(LocalNetwork.interceptor)
             .apply {
                 if (BuildConfig.DEBUG) {
                     addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
@@ -113,6 +117,9 @@ class ApiProvider(
             }
             .build()
     }
+
+    /** The Shelfmark client (session, key), for the connection diagnostics. */
+    val shelfmarkHttp: OkHttpClient get() = shelfmarkClient
 
     /** Set by the container: a client that adds the OPDS catalog's login for covers from that catalog. */
     @Volatile var opdsImageClient: OkHttpClient? = null
@@ -213,6 +220,12 @@ class ApiProvider(
 
     // Emulator testing via `adb reverse` reaches the server on localhost even without a network.
     private fun isLoopback(url: HttpUrl) = url.host == "localhost" || url.host == "127.0.0.1"
+
+    /** Which service a request on the shared client belongs to, for the diagnostics log. */
+    private fun sourceOf(url: HttpUrl): String {
+        val sm = normalize(settings.server.value.shelfmarkUrl).toHttpUrlOrNull()
+        return if (sm != null && url.host == sm.host && url.port == sm.port) "Shelfmark" else "Grimmory"
+    }
 
     private fun isGrimmoryHost(url: HttpUrl): Boolean {
         val base = grimmoryBaseUrl.toHttpUrlOrNull() ?: return false

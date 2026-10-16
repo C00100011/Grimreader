@@ -20,8 +20,9 @@ import androidx.room.RoomDatabase
         LocalBookEntity::class,
         SwipeCardEntity::class,
         WantedEntity::class,
+        BookChunkEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -38,6 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun localBooks(): LocalBookDao
     abstract fun swipe(): SwipeDao
     abstract fun wanted(): WantedDao
+    abstract fun bookChunks(): BookChunkDao
 
     companion object {
         /** v2: books imported from the device. Keeps all existing data. */
@@ -74,9 +76,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v5: the book text and summaries behind the on-device AI chat. Keeps all existing data. */
+        val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `book_chunks` (`bookId` INTEGER NOT NULL, `idx` INTEGER NOT NULL, `section` TEXT NOT NULL, " +
+                        "`spineIndex` INTEGER NOT NULL, `startShare` REAL NOT NULL, `endShare` REAL NOT NULL, `text` TEXT NOT NULL, `summary` TEXT, PRIMARY KEY(`bookId`, `idx`))"
+                )
+            }
+        }
+
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "mylibby.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
                 .build()
     }
