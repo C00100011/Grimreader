@@ -119,7 +119,7 @@ class SyncRepository(
         val all = ArrayList<Book>()
         var page = 0
         do {
-            val res = api.grimmory().books(page = page, size = PAGE, sort = "addedOn", dir = "desc")
+            val res = api.catalog().books(page = page, size = PAGE, sort = "addedOn", dir = "desc")
             val chunk = res.content.map { it.toBook() }
             library.cache(chunk)
             all += chunk
