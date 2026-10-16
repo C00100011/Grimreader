@@ -1,7 +1,7 @@
 name: Test and Build Grimreader
 
 # main         -> test, version from conventional commits, signed APK + AAB attached to a GitHub release (Play versionCode X*1000)
-# development  -> test, signed AAB for the Play Console closed test (Play versionCode lastRelease*1000 + 1..999)
+# development  -> test, signed AAB, uploaded to the Play Console Alpha track (Play versionCode lastRelease*1000 + 1..999)
 # any other    -> test, debug APK as artifact; package id gets ".test" so it can never collide with the Play app
 on:
   push:
@@ -122,7 +122,7 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-  # Development: signed AAB to upload by hand as a Play Console closed test.
+  # Development: signed AAB, kept as an artifact and uploaded to the Play Console Alpha track.
   build-closed-test:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
@@ -185,6 +185,19 @@ jobs:
           path: out/*.aab
           if-no-files-found: error
 
+      # Development only: goes to the Alpha (closed test) track. Needs the PLAY_SERVICE_ACCOUNT_JSON secret in the
+      # "development" environment (a Play Console API service account with release access to this app).
+      # The first upload of an app must still be done by hand in the Play Console.
+      - name: Upload to Play Console
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.vdelaar.mylibby
+          releaseFiles: out/*.aab
+          releaseName: ${{ steps.info.outputs.version }}
+          track: alpha
+          status: draft
+
   # Main when the commits produced a new version: signed APK + AAB attached to a GitHub release.
   release:
     needs: version
@@ -233,3 +246,15 @@ jobs:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
           gh release create "v$VERSION" release/* --title "Grimreader $VERSION" --generate-notes --verify-tag
+
+      # Not active yet: main releases to Production in the Play Console. Needs PLAY_SERVICE_ACCOUNT_JSON in the
+      # "release" environment. Remove the # to switch it on.
+      # - name: Upload to Play Console (production)
+      #   uses: r0adkll/upload-google-play@v1
+      #   with:
+      #     serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      #     packageName: com.vdelaar.mylibby
+      #     releaseFiles: release/*.aab
+      #     releaseName: ${{ needs.version.outputs.version }}
+      #     track: production
+      #     status: completed
