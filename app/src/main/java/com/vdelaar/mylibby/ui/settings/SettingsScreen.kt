@@ -147,7 +147,7 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
                             }
                         }
                         SettingsSwitchRow(stringResource(R.string.material_you), stringResource(R.string.material_you_body), Icons.Rounded.Palette, checked = app.dynamicColor, onCheckedChange = { v -> scope.launch { c.settings.updateApp { it.copy(dynamicColor = v) } } })
-                        // App language (English / Nederlands / system)
+                        // App language (English / Nederlands / Español / system)
                         val activity = context as? android.app.Activity
                         val currentLang = remember(app.language) { com.vdelaar.mylibby.core.AppLanguage.current(context, app.language) }
                         SettingsRow(stringResource(R.string.language), icon = Icons.Rounded.Translate)
@@ -162,7 +162,7 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
                                         }
                                     },
                                     shape = SegmentedButtonDefaults.itemShape(i, com.vdelaar.mylibby.core.AppLanguage.options.size),
-                                ) { Text(when (tag) { "en" -> "English"; "nl" -> "Nederlands"; else -> stringResource(R.string.theme_system) }) }
+                                ) { Text(when (tag) { "en" -> "English"; "es" -> "Español"; "nl" -> "Nederlands"; else -> stringResource(R.string.theme_system) }) }
                             }
                         }
                     }

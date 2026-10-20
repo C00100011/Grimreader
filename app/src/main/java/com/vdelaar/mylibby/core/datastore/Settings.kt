@@ -216,7 +216,7 @@ data class AppState(
     val profile: Profile = Profile(),
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = true,
-    /** "system", "en" or "nl" (see AppLanguage). */
+    /** "system", "en", "es" or "nl" (see AppLanguage). */
     val language: String = "system",
     /** Keep every book of the library on this device, including newly added ones. */
     val autoDownloadAll: Boolean = false,
