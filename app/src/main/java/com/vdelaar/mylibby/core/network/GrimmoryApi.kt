@@ -155,4 +155,8 @@ interface GrimmoryApi {
     // Reading sessions (feeds Grimmory's own statistics)
     @POST("api/v1/reading-sessions")
     suspend fun recordSession(@Body body: ReadingSessionRequest): Response<Unit>
+
+    /** One book's sessions for the signed-in user (newest first). Grimmory has no call for all books at once. */
+    @GET("api/v1/reading-sessions/book/{bookId}")
+    suspend fun bookSessions(@Path("bookId") bookId: Long, @Query("page") page: Int = 0, @Query("size") size: Int = 100): SessionPageDto
 }

@@ -116,7 +116,15 @@ data class ReadingSessionEntity(
     val localDate: String,
     val listening: Boolean = false,
     val synced: Boolean = false,
-)
+    /** Where the session comes from: [SOURCE_APP] (read here), [SOURCE_KOBO] (imported) or [SOURCE_GRIMMORY] (fetched). */
+    @androidx.room.ColumnInfo(defaultValue = SOURCE_APP) val source: String = SOURCE_APP,
+) {
+    companion object {
+        const val SOURCE_APP = "app"
+        const val SOURCE_KOBO = "kobo"
+        const val SOURCE_GRIMMORY = "grimmory"
+    }
+}
 
 /** Time spent per book section (≈ chapter). */
 @Entity(tableName = "section_stats", primaryKeys = ["bookId", "sectionIndex"])

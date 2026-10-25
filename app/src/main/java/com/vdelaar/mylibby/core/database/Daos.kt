@@ -185,6 +185,8 @@ interface BookmarkDao {
 
 data class DayTotal(val localDate: String, val seconds: Long, val pages: Long)
 
+data class SessionStart(val bookId: Long, val startTime: Long)
+
 data class BookTotal(val bookId: Long, val bookTitle: String, val seconds: Long, val sessions: Int)
 
 /** All reading (not listening) of one book: for its reading pace. */
@@ -200,6 +202,15 @@ interface SessionDao {
 
     @Query("SELECT * FROM sessions WHERE synced = 0")
     suspend fun unsynced(): List<ReadingSessionEntity>
+
+    @Query("SELECT * FROM sessions WHERE bookId = :bookId ORDER BY startTime DESC")
+    fun observeForBook(bookId: Long): Flow<List<ReadingSessionEntity>>
+
+    @Query("SELECT * FROM sessions WHERE localDate = :localDate ORDER BY startTime")
+    fun observeForDay(localDate: String): Flow<List<ReadingSessionEntity>>
+
+    @Query("SELECT bookId, startTime FROM sessions")
+    suspend fun starts(): List<SessionStart>
 
     @Query("UPDATE sessions SET synced = 1 WHERE id = :id")
     suspend fun markSynced(id: Long)

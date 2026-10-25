@@ -36,6 +36,7 @@ class AppContainer(context: Context) {
     )
     val downloads = DownloadRepository(context, api, db, settings)
     val stats = StatsRepository(api, db, settings, sync)
+    val koboImport = com.vdelaar.mylibby.data.KoboImportRepository(context.applicationContext, db, pullBook = { id, title -> stats.pullBookSessions(id, title) }, pushSessions = { stats.pushSessions() })
     val shelfmark = ShelfmarkRepository(api, settings, tokens)
     val tts = TtsController(context, settings, appScope)
     val localBooks = com.vdelaar.mylibby.data.LocalBooksRepository(context, db)
