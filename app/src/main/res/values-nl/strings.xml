@@ -308,6 +308,9 @@
     <string name="reader_settings_hint">Lettertypes, groottes en paginakleuren pas je aan in de lezer met de knop Weergave.</string>
     <string name="reading">Lezen</string>
     <string name="reading_aloud">Voorlezen</string>
+    <string name="calendar_prev_month">Vorige maand</string>
+    <string name="calendar_next_month">Volgende maand</string>
+    <string name="calendar_month_summary">%1$s gelezen op %2$d dagen</string>
     <string name="reading_calendar">Leeskalender</string>
     <string name="reading_challenge">Leesuitdaging</string>
     <string name="recent_sessions">Recente sessies</string>
@@ -691,6 +694,56 @@
     <string name="import_done_body">%1$d leessessies, %2$d favorieten, %3$d markeringen en %4$d bladwijzers toegevoegd.</string>
     <string name="import_not_found">%1$d boeken uit het bestand staan nog niet in je bibliotheek, dus hun favorieten, status en markeringen zijn overgeslagen. Hun leesstatistieken zijn wel bewaard.</string>
     <string name="import_queued">De geïmporteerde wijzigingen worden zo met Grimmory gesynchroniseerd.</string>
+    <string name="experimental_group">Experimenteel</string>
+    <string name="kobo_import">Sessies importeren van een Kobo</string>
+    <string name="kobo_import_body">Lees je leessessies van een Kobo e-reader die met een USB-kabel is aangesloten.</string>
+    <string name="kobo_help_title">Importeren van een Kobo</string>
+    <string name="kobo_help_body">1. Sluit je Kobo met een USB-kabel aan op deze telefoon (mogelijk is een verloopstukje nodig) en kies op de Kobo, als erom gevraagd wordt, “Verbinden”.\n2. Kies hieronder de Kobo-schijf. Grimreader leest alleen het bestand .kobo/KoboReader.sqlite en wijzigt niets op je Kobo.\n\nDe Kobo bewaart het tijdstip van elke paginaomslag; sessies worden daaruit opgebouwd met omslagen die minder dan 10 minuten uit elkaar liggen. De tijden zijn dus een schatting en de voortgang per sessie is niet beschikbaar.</string>
+    <string name="kobo_choose_drive">Kies de Kobo-schijf</string>
+    <string name="kobo_choose_file">Zelf KoboReader.sqlite kiezen</string>
+    <string name="kobo_not_found">Daar is geen KoboReader.sqlite gevonden. Kies de hele Kobo-schijf, of het bestand .kobo/KoboReader.sqlite.</string>
+    <string name="kobo_read_failed">Kon de Kobo-database niet lezen</string>
+    <string name="kobo_preview_title">Gevonden op je Kobo</string>
+    <string name="kobo_preview_counts">Leessessies om toe te voegen: %1$d (boeken: %2$d), samen %3$s (%4$s – %5$s).</string>
+    <string name="kobo_preview_missing">Niet in je bibliotheek, overgeslagen (%1$d): %2$s</string>
+    <string name="kobo_preview_none">Er is niets nieuws om van deze Kobo te importeren.</string>
+    <string name="kobo_send_switch">Ook naar Grimmory sturen</string>
+    <string name="kobo_send_body">De sessies komen in de statistieken van je Grimmory-account. Sessies die het al heeft, worden niet opnieuw gestuurd.</string>
+    <string name="kobo_do_import">Importeren</string>
+    <string name="kobo_done_title">Import klaar</string>
+    <string name="kobo_done_sent">Ze zijn naar Grimmory gestuurd.</string>
+    <string name="kobo_done_queued">Ze worden zo naar Grimmory gestuurd.</string>
+    <string name="sessions_pull">Leessessies ophalen uit Grimmory</string>
+    <string name="sessions_pull_body">Haalt de sessies op die Grimmory van je boeken heeft, bijvoorbeeld uit de webreader of van een Kobo.</string>
+    <string name="sessions_pull_progress">Sessies ophalen… boek %1$d van %2$d</string>
+    <string name="sessions_pull_done">Sessies toegevoegd: %1$d (boeken bekeken: %2$d)</string>
+    <string name="sessions_pull_failed">Sessies toegevoegd: %1$d; boeken die niet bereikbaar waren: %2$d</string>
+    <string name="sessions_title">Leessessies</string>
+    <string name="sessions_show_all">Toon alle %1$d</string>
+    <string name="sessions_show_less">Toon minder</string>
+    <plurals name="kobo_preview_already">
+        <item quantity="one">%1$d sessie is er al en wordt overgeslagen.</item>
+        <item quantity="other">%1$d sessies zijn er al en worden overgeslagen.</item>
+    </plurals>
+    <plurals name="kobo_book_line">
+        <item quantity="one">%1$s · %2$d sessie · %3$s</item>
+        <item quantity="other">%1$s · %2$d sessies · %3$s</item>
+    </plurals>
+    <plurals name="kobo_done_body">
+        <item quantity="one">%1$d leessessie toegevoegd.</item>
+        <item quantity="other">%1$d leessessies toegevoegd.</item>
+    </plurals>
+    <plurals name="sessions_summary">
+        <item quantity="one">%1$d sessie · %2$s</item>
+        <item quantity="other">%1$d sessies · %2$s</item>
+    </plurals>
+    <plurals name="sessions_pages">
+        <item quantity="one">%1$d pagina</item>
+        <item quantity="other">%1$d pagina\'s</item>
+    </plurals>
+    <string name="sessions_source_app">Gelezen in Grimreader</string>
+    <string name="sessions_source_kobo">Van je Kobo</string>
+    <string name="sessions_source_grimmory">Uit Grimmory</string>
     <string name="libs_group_voice">Natuurlijke stem</string>
     <string name="libs_group_fonts">Lettertypes</string>
     <string name="lib_supertonic_code">De referentiecode waar de stemmotor op is gebaseerd.</string>

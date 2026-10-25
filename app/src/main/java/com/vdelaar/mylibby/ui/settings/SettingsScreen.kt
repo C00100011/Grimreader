@@ -246,6 +246,7 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
                         SettingsPage.INTEGRATIONS -> IntegrationsPage(navigator) { m -> scope.launch { snackbar.showSnackbar(m) } }
                         SettingsPage.DATA -> {
                     PersonalDataGroup(onMessage = { m -> scope.launch { snackbar.showSnackbar(m) } })
+                    KoboImportGroup(onMessage = { m -> scope.launch { snackbar.showSnackbar(m) } })
 
                     SettingsGroup(stringResource(R.string.storage)) {
                         val startedMsg = stringResource(R.string.download_all_started)

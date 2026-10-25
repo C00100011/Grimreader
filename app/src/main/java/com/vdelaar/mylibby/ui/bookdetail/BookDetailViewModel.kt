@@ -38,6 +38,9 @@ class BookDetailViewModel(private val c: AppContainer, private val bookId: Long)
     val isFavourite: StateFlow<Boolean> = c.library.observeIsFavourite(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val download: StateFlow<DownloadEntity?> = c.downloads.observe(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, null)
     val secondsRead: StateFlow<Long> = c.stats.bookSeconds(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+    /** Every reading session of this book: read here, imported from a Kobo, or fetched from Grimmory. */
+    val sessions: StateFlow<List<com.vdelaar.mylibby.core.database.ReadingSessionEntity>> =
+        c.stats.bookSessions(bookId).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     /** Reading pace of this book; recomputed whenever more reading time is recorded. */
     val pace: StateFlow<com.vdelaar.mylibby.data.BookPace?> = kotlinx.coroutines.flow.combine(
         c.stats.bookSeconds(bookId),
@@ -64,6 +67,8 @@ class BookDetailViewModel(private val c: AppContainer, private val bookId: Long)
                 .onSuccess { b ->
                     _state.update { it.copy(book = b, loading = false) }
                     estimate(b)
+                    // Sessions from other places (web reader, Kobo) show up in the list once fetched.
+                    launch { c.stats.pullBookSessions(bookId, b.title) }
                     launch { val r = c.library.reviews(bookId); _state.update { it.copy(reviews = r) } }
                     launch { val sim = c.library.similarBooks(bookId); _state.update { it.copy(similar = sim) } }
                     b.seriesName?.let { name ->

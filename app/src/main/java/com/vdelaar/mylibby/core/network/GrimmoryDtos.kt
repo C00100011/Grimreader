@@ -322,6 +322,26 @@ data class ReadingSessionRequest(
     val endLocation: String? = null,
 )
 
+/** A session as Grimmory stores it (GET /reading-sessions/book/{id}); the page wrapper is Spring's. */
+@Serializable
+data class ReadingSessionDto(
+    val id: Long? = null,
+    val bookId: Long? = null,
+    val bookTitle: String? = null,
+    val bookType: String? = null,
+    val startTime: String? = null,
+    val endTime: String? = null,
+    val durationSeconds: Int? = null,
+    val startProgress: Float? = null,
+    val endProgress: Float? = null,
+)
+
+@Serializable
+data class SessionPageDto(
+    val content: List<ReadingSessionDto> = emptyList(),
+    val last: Boolean? = null,
+)
+
 @Serializable
 data class StreakDto(
     val currentStreak: Int? = null,

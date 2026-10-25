@@ -1,6 +1,17 @@
 package com.vdelaar.mylibby.ui.activity
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.rounded.ChevronLeft
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextAlign
+import java.time.YearMonth
 import androidx.compose.runtime.remember
 import com.vdelaar.mylibby.R
 import androidx.compose.ui.res.pluralStringResource
@@ -23,6 +34,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
@@ -75,7 +87,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.TemporalAdjusters
 
-class ActivityViewModel(c: AppContainer) : ViewModel() {
+class ActivityViewModel(private val c: AppContainer) : ViewModel() {
     private fun <T> StateFlowOf(flow: kotlinx.coroutines.flow.Flow<T>, initial: T): StateFlow<T> =
         flow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initial)
 
@@ -86,6 +98,7 @@ class ActivityViewModel(c: AppContainer) : ViewModel() {
     val avgChapter = StateFlowOf(c.stats.avgChapterSeconds, null)
     val avgPage = StateFlowOf(c.stats.avgSecondsPerPage, 0.0)
     val topBooks = StateFlowOf(c.stats.topBooks(5), emptyList())
+    fun daySessions(date: LocalDate) = c.stats.daySessions(date.toString())
     val recent = StateFlowOf(c.stats.recentSessions(15), emptyList())
 }
 
@@ -121,7 +134,7 @@ fun ActivityScreen(navigator: AppNavigator) {
                     StreakCard(streak)
                     WeekCard(streak)
                 }
-                HeatmapCard(streak)
+                HeatmapCard(streak, vm::daySessions) { navigator.openBook(it) }
                 Text(stringResource(R.string.your_reading), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 8.dp, start = 4.dp))
                 val tiles = listOf(
                     Triple(formatDuration(totalSeconds), stringResource(R.string.stat_total_time), Icons.Rounded.Schedule),
@@ -217,12 +230,26 @@ private fun WeekCard(streak: StreakInfo, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun HeatmapCard(streak: StreakInfo) {
+private fun HeatmapCard(streak: StreakInfo, daySessions: (LocalDate) -> kotlinx.coroutines.flow.Flow<List<ReadingSessionEntity>>, onOpen: (Long) -> Unit) {
     val today = LocalDate.now()
     val primary = MaterialTheme.colorScheme.primary
     val empty = MaterialTheme.colorScheme.surfaceVariant
-    Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    if (open) {
+        androidx.compose.material3.ModalBottomSheet(
+            onDismissRequest = { open = false },
+            sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+                Text(stringResource(R.string.reading_calendar), style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                MonthBrowser(streak, daySessions) { open = false; onOpen(it) }
+            }
+        }
+    }
+    Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).clickable { open = true }) {
         Column(Modifier.padding(20.dp)) {
             Text(stringResource(R.string.reading_calendar), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(12.dp))
@@ -262,6 +289,111 @@ private fun HeatmapCard(streak: StreakInfo) {
                 Legend(primary, stringResource(R.string.legend_met))
                 Spacer(Modifier.width(12.dp))
                 Legend(Color(0xFF7FB8E0), stringResource(R.string.legend_freeze))
+            }
+        }
+    }
+}
+
+/** One month at a time with arrows to go back (as far as the first recorded reading) and forward to today. */
+@Composable
+private fun MonthBrowser(streak: StreakInfo, daySessions: (LocalDate) -> kotlinx.coroutines.flow.Flow<List<ReadingSessionEntity>>, onOpen: (Long) -> Unit) {
+    val today = LocalDate.now()
+    val thisMonth = YearMonth.from(today)
+    val earliest = (streak.minutes.keys + streak.days.keys).minOrNull()?.let { YearMonth.from(it) } ?: thisMonth
+    var month by remember { mutableStateOf(thisMonth) }
+    var picked by remember { mutableStateOf<LocalDate?>(null) }
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    val primary = MaterialTheme.colorScheme.primary
+    val empty = MaterialTheme.colorScheme.surfaceVariant
+    val first = month.atDay(1)
+    val lead = first.dayOfWeek.value - 1 // Monday first
+    val rows = (lead + month.lengthOfMonth() + 6) / 7
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = { month = month.minusMonths(1); picked = null }, enabled = month > earliest) {
+            Icon(Icons.Rounded.ChevronLeft, stringResource(R.string.calendar_prev_month))
+        }
+        Text(
+            month.atDay(1).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)).replaceFirstChar { it.titlecase(locale) },
+            Modifier.weight(1f).clickable(enabled = month != thisMonth) { month = thisMonth; picked = null },
+            style = MaterialTheme.typography.titleSmall,
+            textAlign = TextAlign.Center,
+        )
+        IconButton(onClick = { month = month.plusMonths(1); picked = null }, enabled = month < thisMonth) {
+            Icon(Icons.Rounded.ChevronRight, stringResource(R.string.calendar_next_month))
+        }
+    }
+    Row(Modifier.fillMaxWidth()) {
+        DayOfWeek.entries.forEach { d ->
+            Text(
+                d.getDisplayName(TextStyle.NARROW, locale), Modifier.weight(1f), textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+    Spacer(Modifier.height(4.dp))
+    for (r in 0 until rows) {
+        Row(Modifier.fillMaxWidth()) {
+            for (c in 0 until 7) {
+                val date = first.plusDays((r * 7 + c - lead).toLong())
+                val inMonth = YearMonth.from(date) == month && !date.isAfter(today)
+                val minutes = streak.minutes[date] ?: 0L
+                val state = streak.days[date]
+                val fill = when {
+                    !inMonth -> Color.Transparent
+                    state == DayState.FROZEN -> Color(0xFF7FB8E0)
+                    state == DayState.MET -> primary.copy(alpha = (0.55f + (minutes / (streak.target * 3f).coerceAtLeast(1f))).coerceAtMost(1f))
+                    minutes > 0 -> primary.copy(alpha = .28f)
+                    else -> empty
+                }
+                Box(Modifier.weight(1f).aspectRatio(1f).padding(2.dp), contentAlignment = Alignment.Center) {
+                    if (YearMonth.from(date) == month) {
+                        Box(
+                            Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)).background(fill)
+                                .then(if (date == picked) Modifier.border(2.dp, primary, RoundedCornerShape(8.dp)) else Modifier)
+                                .clickable(enabled = inMonth) { picked = if (picked == date) null else date },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                "${date.dayOfMonth}", fontSize = 12.sp,
+                                color = if (date == today) primary else MaterialTheme.colorScheme.onSurface.copy(alpha = if (inMonth) 1f else .3f),
+                                fontWeight = if (date == today) androidx.compose.ui.text.font.FontWeight.Bold else null,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    val monthMinutes = (1..month.lengthOfMonth()).sumOf { streak.minutes[month.atDay(it)] ?: 0L }
+    val readDays = (1..month.lengthOfMonth()).count { (streak.minutes[month.atDay(it)] ?: 0L) > 0 }
+    val day = picked
+    Text(
+        if (day != null) {
+            val m = streak.minutes[day] ?: 0L
+            day.format(DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM).withLocale(locale)) + " · " +
+                if (m > 0) formatDuration(m * 60) else stringResource(R.string.legend_none)
+        } else stringResource(R.string.calendar_month_summary, formatDuration(monthMinutes * 60), readDays),
+        Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    if (day != null) {
+        val sessions by remember(day) { daySessions(day) }.collectAsStateWithLifecycle(emptyList())
+        val timeFmt = remember(locale) { DateTimeFormatter.ofPattern("HH:mm", locale) }
+        Column(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            sessions.forEach { s ->
+                Row(Modifier.fillMaxWidth().clickable { onOpen(s.bookId) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(if (s.listening) "🎧" else "📖", fontSize = 18.sp)
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(s.bookTitle, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            Instant.ofEpochMilli(s.startTime).atZone(ZoneId.systemDefault()).format(timeFmt) + " – " +
+                                Instant.ofEpochMilli(s.endTime).atZone(ZoneId.systemDefault()).format(timeFmt) +
+                                if (s.pagesTurned > 0) " · " + pluralStringResource(R.plurals.sessions_pages, s.pagesTurned, s.pagesTurned) else "",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(formatDuration(s.durationSeconds.toLong()), style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     }

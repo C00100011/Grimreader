@@ -10,11 +10,22 @@ import com.vdelaar.mylibby.core.datastore.SettingsRepository
 import com.vdelaar.mylibby.core.network.ApiProvider
 import com.vdelaar.mylibby.core.network.ReadingSessionRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.Instant
+
+/** What fetching the sessions from Grimmory came back with. */
+data class SessionPullResult(val books: Int, val added: Int, val failed: Int)
 
 data class ReadingSpeed(
     /** Book content bytes per active minute (the unit foliate-js reports remaining content in). */
@@ -41,6 +52,10 @@ class StatsRepository(
     fun topBooks(limit: Int = 5) = db.sessions().observeTopBooks(limit)
     fun recentSessions(limit: Int = 20) = db.sessions().observeRecent(limit)
     fun bookSeconds(bookId: Long) = db.sessions().observeBookSeconds(bookId)
+    /** Every session of one book, newest first: read here, imported from a Kobo or fetched from Grimmory. */
+    fun bookSessions(bookId: Long) = db.sessions().observeForBook(bookId)
+    /** The sessions that started on one local day (yyyy-MM-dd), in the order they happened. */
+    fun daySessions(localDate: String) = db.sessions().observeForDay(localDate)
     fun sectionStats(bookId: Long) = db.sectionStats().observeForBook(bookId)
 
     /** Reading time and pace for one book; null until there is enough reading to say something. */
@@ -110,6 +125,69 @@ class StatsRepository(
         if (!pushSessions()) sync.requestSync()
     }
 
+    private val pullLock = Mutex()
+
+    /**
+     * Fetches one book's sessions from Grimmory and keeps the ones this device does not have yet (same start time =
+     * same session). Returns how many were added, or -1 when Grimmory could not be reached.
+     */
+    suspend fun pullBookSessions(bookId: Long, title: String? = null): Int = pullLock.withLock { pullBookSessionsLocked(bookId, title) }
+
+    private suspend fun pullBookSessionsLocked(bookId: Long, title: String?): Int = withContext(Dispatchers.IO) {
+        if (bookId < 0) return@withContext 0 // a book on the device only has no Grimmory sessions
+        val g = runCatching { api.grimmory() }.getOrNull() ?: return@withContext -1
+        val have = db.sessions().starts().filter { it.bookId == bookId }.map { it.startTime }.toMutableList()
+        var added = 0
+        var page = 0
+        while (page < MAX_SESSION_PAGES) {
+            val res = try {
+                g.bookSessions(bookId, page, SESSION_PAGE)
+            } catch (e: retrofit2.HttpException) {
+                if (e.code() == 404) return@withContext added // the book is gone from Grimmory
+                return@withContext -1
+            } catch (_: Exception) {
+                return@withContext -1
+            }
+            for (e in sessionsFromGrimmory(res.content, bookId, title, have)) {
+                db.sessions().insert(e)
+                have += e.startTime
+                added++
+            }
+            if (res.last == true || res.content.size < SESSION_PAGE) break
+            page++
+        }
+        added
+    }
+
+    /**
+     * Fetches the sessions of every book in the library (Grimmory has no call for all books at once); books that were
+     * started come first. [onProgress] gets (books done, books total).
+     */
+    suspend fun pullAllSessions(onProgress: (Int, Int) -> Unit = { _, _ -> }): SessionPullResult = withContext(Dispatchers.IO) {
+        fun isStarted(b: com.vdelaar.mylibby.core.database.BookEntity): Boolean {
+            val status = b.readStatus
+            return (status != null && status != "UNREAD" && status != "UNSET") || (b.readProgress ?: 0f) > 0f || b.lastReadTime != null
+        }
+        val library = db.books().all().sortedByDescending { isStarted(it) }
+        val done = AtomicInteger()
+        val added = AtomicInteger()
+        val failed = AtomicInteger()
+        val gate = Semaphore(PARALLEL_PULLS)
+        onProgress(0, library.size)
+        coroutineScope {
+            library.map { b ->
+                async {
+                    gate.withPermit {
+                        val n = pullBookSessions(b.id, b.title)
+                        if (n < 0) failed.incrementAndGet() else added.addAndGet(n)
+                        onProgress(done.incrementAndGet(), library.size)
+                    }
+                }
+            }.awaitAll()
+        }
+        SessionPullResult(library.size, added.get(), failed.get())
+    }
+
     /** Sends unsynced sessions to Grimmory. Returns false if any failed. */
     suspend fun pushSessions(): Boolean = withContext(Dispatchers.IO) {
         val g = runCatching { api.grimmory() }.getOrNull() ?: return@withContext false
@@ -127,6 +205,9 @@ class StatsRepository(
     }
 
     companion object {
+        const val SESSION_PAGE = 100
+        const val MAX_SESSION_PAGES = 50
+        const val PARALLEL_PULLS = 4
         const val DEFAULT_BYTES_PER_MINUTE = 1600.0
         const val DEFAULT_WORDS_PER_BYTE = 1.0 / 7.5
     }
@@ -167,6 +248,8 @@ fun formatMinutes(minutes: Double): String {
     }
 }
 
+private val ReadingSessionEntity.hasProgress: Boolean get() = !(startProgress == 0f && endProgress == 0f && source == ReadingSessionEntity.SOURCE_KOBO)
+
 internal fun ReadingSessionEntity.toRequest() = ReadingSessionRequest(
     bookId = bookId,
     bookType = bookType,
@@ -174,12 +257,40 @@ internal fun ReadingSessionEntity.toRequest() = ReadingSessionRequest(
     endTime = Instant.ofEpochMilli(endTime).toString(),
     durationSeconds = durationSeconds,
     durationFormatted = formatDuration(durationSeconds.toLong()),
-    startProgress = startProgress.round2(),
-    endProgress = endProgress.round2(),
-    progressDelta = (endProgress - startProgress).round2(),
+    // A session that came without progress (imported from a Kobo) says nothing about progress: leave it out, not 0.
+    startProgress = if (hasProgress) startProgress.round2() else null,
+    endProgress = if (hasProgress) endProgress.round2() else null,
+    progressDelta = if (hasProgress) (endProgress - startProgress).round2() else null,
     startLocation = startCfi,
     endLocation = endCfi,
 )
 
 /** Grimmory keeps session progress to two decimals; sending more only adds noise. */
 private fun Float.round2(): Float = Math.round(this * 100f) / 100f
+
+
+/**
+ * Turns the sessions Grimmory sent into local ones, leaving out those whose start is in [have] (already known),
+ * that have no usable start time, or that lasted no time. Sessions in the list itself that start together count once.
+ */
+internal fun sessionsFromGrimmory(dtos: List<com.vdelaar.mylibby.core.network.ReadingSessionDto>, bookId: Long, title: String?, have: Collection<Long>): List<ReadingSessionEntity> {
+    val known = have.toMutableList()
+    val out = ArrayList<ReadingSessionEntity>()
+    for (dto in dtos) {
+        val start = parseInstant(dto.startTime) ?: continue
+        val end = parseInstant(dto.endTime) ?: (start + (dto.durationSeconds ?: 0) * 1000L)
+        val seconds = dto.durationSeconds ?: ((end - start) / 1000).toInt()
+        if (seconds <= 0 || isDuplicateSession(known, start)) continue
+        known += start
+        out += ReadingSessionEntity(
+            bookId = bookId, bookTitle = dto.bookTitle ?: title.orEmpty(), bookType = dto.bookType,
+            startTime = start, endTime = end, durationSeconds = seconds,
+            startProgress = dto.startProgress ?: 0f, endProgress = dto.endProgress ?: 0f,
+            startCfi = null, endCfi = null, bytesRead = 0, pagesTurned = 0,
+            localDate = java.time.Instant.ofEpochMilli(start).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString(),
+            listening = dto.bookType.equals("AUDIOBOOK", ignoreCase = true),
+            synced = true, source = ReadingSessionEntity.SOURCE_GRIMMORY,
+        )
+    }
+    return out
+}

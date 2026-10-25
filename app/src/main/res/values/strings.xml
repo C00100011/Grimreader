@@ -309,6 +309,9 @@
     <string name="reader_settings_hint">Fonts, sizes and page colours can be changed inside the reader with the Display button.</string>
     <string name="reading">Reading</string>
     <string name="reading_aloud">Reading aloud</string>
+    <string name="calendar_prev_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="calendar_month_summary">%1$s read on %2$d days</string>
     <string name="reading_calendar">Reading calendar</string>
     <string name="reading_challenge">Reading challenge</string>
     <string name="recent_sessions">Recent sessions</string>
@@ -692,6 +695,56 @@
     <string name="import_done_body">Added %1$d reading sessions, %2$d favourites, %3$d highlights and %4$d bookmarks.</string>
     <string name="import_not_found">%1$d books from the file are not in your library yet, so their favourites, status and highlights were skipped. Their reading stats were kept.</string>
     <string name="import_queued">The imported changes will sync with Grimmory shortly.</string>
+    <string name="experimental_group">Experimental</string>
+    <string name="kobo_import">Import sessions from a Kobo</string>
+    <string name="kobo_import_body">Read your reading sessions from a Kobo e-reader connected with a USB cable.</string>
+    <string name="kobo_help_title">Import from a Kobo</string>
+    <string name="kobo_help_body">1. Connect your Kobo to this phone with a USB cable (an adapter may be needed) and, if asked on the Kobo, choose “Connect”.\n2. Choose the Kobo drive below. Grimreader reads only the file .kobo/KoboReader.sqlite and changes nothing on your Kobo.\n\nThe Kobo keeps the time of every page turn, so sessions are rebuilt from page turns less than 10 minutes apart. Times are therefore approximate, and progress per session is not available.</string>
+    <string name="kobo_choose_drive">Choose the Kobo drive</string>
+    <string name="kobo_choose_file">Choose KoboReader.sqlite myself</string>
+    <string name="kobo_not_found">No KoboReader.sqlite found there. Choose the whole Kobo drive, or the file .kobo/KoboReader.sqlite.</string>
+    <string name="kobo_read_failed">Could not read the Kobo database</string>
+    <string name="kobo_preview_title">Found on your Kobo</string>
+    <string name="kobo_preview_counts">Reading sessions to add: %1$d (books: %2$d), %3$s in total (%4$s – %5$s).</string>
+    <string name="kobo_preview_missing">Not in your library, skipped (%1$d): %2$s</string>
+    <string name="kobo_preview_none">There is nothing new to import from this Kobo.</string>
+    <string name="kobo_send_switch">Also send to Grimmory</string>
+    <string name="kobo_send_body">The sessions are added to the statistics on your Grimmory account. Sessions it already has are not sent again.</string>
+    <string name="kobo_do_import">Import</string>
+    <string name="kobo_done_title">Import finished</string>
+    <string name="kobo_done_sent">They were sent to Grimmory.</string>
+    <string name="kobo_done_queued">They will be sent to Grimmory shortly.</string>
+    <string name="sessions_pull">Get reading sessions from Grimmory</string>
+    <string name="sessions_pull_body">Fetches the sessions Grimmory has of your books, such as those read in the web reader or on a Kobo.</string>
+    <string name="sessions_pull_progress">Fetching sessions… book %1$d of %2$d</string>
+    <string name="sessions_pull_done">Sessions added: %1$d (books checked: %2$d)</string>
+    <string name="sessions_pull_failed">Sessions added: %1$d; books that could not be reached: %2$d</string>
+    <string name="sessions_title">Reading sessions</string>
+    <string name="sessions_show_all">Show all %1$d</string>
+    <string name="sessions_show_less">Show fewer</string>
+    <plurals name="kobo_preview_already">
+        <item quantity="one">%1$d session is already here and will be skipped.</item>
+        <item quantity="other">%1$d sessions are already here and will be skipped.</item>
+    </plurals>
+    <plurals name="kobo_book_line">
+        <item quantity="one">%1$s · %2$d session · %3$s</item>
+        <item quantity="other">%1$s · %2$d sessions · %3$s</item>
+    </plurals>
+    <plurals name="kobo_done_body">
+        <item quantity="one">Added %1$d reading session.</item>
+        <item quantity="other">Added %1$d reading sessions.</item>
+    </plurals>
+    <plurals name="sessions_summary">
+        <item quantity="one">%1$d session · %2$s</item>
+        <item quantity="other">%1$d sessions · %2$s</item>
+    </plurals>
+    <plurals name="sessions_pages">
+        <item quantity="one">%1$d page</item>
+        <item quantity="other">%1$d pages</item>
+    </plurals>
+    <string name="sessions_source_app">Read in Grimreader</string>
+    <string name="sessions_source_kobo">From your Kobo</string>
+    <string name="sessions_source_grimmory">From Grimmory</string>
     <string name="libs_group_voice">Natural voice</string>
     <string name="libs_group_fonts">Typefaces</string>
     <string name="lib_supertonic_code">The reference inference code the voice engine is based on.</string>
