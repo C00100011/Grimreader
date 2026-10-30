@@ -59,6 +59,7 @@ Grimreader works with no account and no server: open your own EPUB files, or try
 - **New books in your genres and languages** (from Open Library) and **free public-domain classics** (Project Gutenberg).
 - **This week's picks**: a deck of book ideas every Monday. Swipe right for "want to read", up for "love it", left for "no". Swiped books land in *Want to read* and *Want to buy* lists.
 - Optional trending books and suggestions from Hardcover with your own free API key.
+- Hold a word while reading to look it up, with the sentence it is in. It works offline with dictionaries you download in the app: [Wiktionary](https://www.wiktionary.org) per language (definitions, examples, synonyms and pronunciation, via [Kaikki.org](https://kaikki.org)) and [FreeDict](https://freedict.org) translations; lookups never leave the device (Settings → Dictionaries).
 
 ### Sync and integrations (all optional)
 - **Grimmory**: library, reading progress, reading sessions, favourites shelf and similar books. Two-way progress with a Kobo or KOReader: the furthest position wins, and the reader offers to jump when another device is further along.
@@ -86,6 +87,7 @@ You are responsible for having the rights to anything you download or import, in
 - Server addresses, logins and API keys are stored encrypted on the device and are only sent to the services *you* configure.
 - Reading progress, highlights and statistics stay on the device unless you connect your own server.
 - Optional features contact third parties only when you turn them on: Open Library and Project Gutenberg (a genre and a language, plus your IP address), Hardcover (your own key, plus the title and first author of a few books you read), and Hugging Face (one-time download of the voice model).
+- Looking up a word happens on the device, in dictionaries you downloaded (the files come from kaikki.org and freedict.org). The word, the book and the sentence are never sent anywhere.
 - Cleartext HTTP and user-installed certificate authorities are allowed so the app works with home servers. For self-signed servers the app uses *certificate pinning on confirmation* (you see the SHA-256 fingerprint and approve it) instead of trusting everything.
 - Backups exclude tokens and downloaded books.
 
@@ -289,6 +291,9 @@ Grimreader is built on open-source components. The full license texts are in `ap
 | Supertonic code | MIT |
 | Supertonic 3 voice model (downloaded by the user, not bundled) | OpenRAIL-M, including its use restrictions |
 | Literata, Lora, Merriweather, Atkinson Hyperlegible, OpenDyslexic | SIL Open Font License 1.1 |
+| Dictionaries you download: [Wiktionary](https://www.wiktionary.org) text via [Kaikki.org](https://kaikki.org) (not bundled) | CC BY-SA 4.0, shortened and reformatted by the app |
+| Dictionaries you download: [FreeDict](https://freedict.org) (not bundled) | GPL 2.0 or later |
+| [XZ for Java](https://tukaani.org/xz/java.html) | 0BSD |
 | Demo books (Standard Ebooks) | CC0 1.0 |
 
 Grimmory and Shelfmark are separate servers that the app reaches over their HTTP APIs; no code from them is included (you bring them in the game).
@@ -315,6 +320,8 @@ This is a **source-available** license, not an [OSI-approved open-source](https:
 - [Standard Ebooks](https://standardebooks.org) for the demo books.
 - [Open Library](https://openlibrary.org) and [Project Gutenberg](https://www.gutenberg.org) for open catalogs.
 - [Hardcover](https://hardcover.app) for book data (shown as "Data from Hardcover").
+- [Wiktionary](https://www.wiktionary.org) (CC BY-SA 4.0, by its contributors), as extracted by [wiktextract and Kaikki.org](https://kaikki.org), for the downloadable definitions and synonyms.
+- [FreeDict](https://freedict.org) for the downloadable translation dictionaries (GPL 2 or later, by various authors; each package carries its own licence and sources) and [XZ for Java](https://tukaani.org/xz/java.html) (0BSD) to unpack them. Wiktionary data is extracted by Tatu Ylönen's [wiktextract](https://github.com/tatuylonen/wiktextract) ("Wiktextract: Wiktionary as Machine-Readable Structured Data", LREC 2022).
 - [Supertone](https://huggingface.co/Supertone/supertonic-3) for the Supertonic voice model.
 
 And ofcourse a little bit of AI to clarify some strange issues i've had in developing, and preparing this repo for open sourcing since it was just a private project for friend and family on my own Grimmory, Shelfmark etc. So i had to clean a lot of hardcoded s**t. And addressed security issues.

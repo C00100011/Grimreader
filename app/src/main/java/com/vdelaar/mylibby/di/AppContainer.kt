@@ -50,6 +50,15 @@ class AppContainer(context: Context) {
         library,
         com.vdelaar.mylibby.data.HardcoverCache(java.io.File(context.cacheDir, "hardcover")),
     )
+    /** FreeDict dictionaries downloaded to the device: lookups in them need no network. */
+    val dictionaryPacks = com.vdelaar.mylibby.data.dict.DictionaryPacks(
+        java.io.File(context.filesDir, "dictionaries"), com.vdelaar.mylibby.data.OkDictionaryHttp(),
+        com.vdelaar.mylibby.data.dict.OkPackDownloader(), com.vdelaar.mylibby.data.dict.SqlitePackIndexStore(),
+    )
+    /** Wiktionary (via Kaikki.org) downloaded per language: definitions, examples and synonyms with no network. */
+    val wiktionary = com.vdelaar.mylibby.data.dict.WiktionaryPacks(
+        java.io.File(context.filesDir, "wiktionary"), com.vdelaar.mylibby.data.dict.OkPackDownloader(gzip = true), com.vdelaar.mylibby.data.dict.SqliteWiktStore(),
+    )
     val discover = com.vdelaar.mylibby.data.DiscoverRepository(db, settings, library, com.vdelaar.mylibby.data.HardcoverCache(java.io.File(context.cacheDir, "openlibrary")))
     val swipe = com.vdelaar.mylibby.data.SwipeRepository(db, discover, library)
     /** The on-device model (Gemini Nano) and the book chat built on it; the chat is hidden on phones without the model. */

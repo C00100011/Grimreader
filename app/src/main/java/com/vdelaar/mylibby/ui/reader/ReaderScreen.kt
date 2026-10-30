@@ -121,6 +121,7 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     val settings by vm.settings.collectAsStateWithLifecycle()
     val tts by vm.ttsState.collectAsStateWithLifecycle()
+    val lookup by vm.lookup.collectAsStateWithLifecycle()
     val annotations by vm.annotations.collectAsStateWithLifecycle()
     val bookmarks by vm.bookmarks.collectAsStateWithLifecycle()
     val speed by vm.speed.collectAsStateWithLifecycle()
@@ -150,6 +151,7 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
             onSelectionAction = { action ->
                 val sel = vm.state.value.selection
                 when (action) {
+                    SelectionAction.LOOKUP -> vm.lookUpSelection()
                     SelectionAction.HIGHLIGHT -> vm.highlightSelection()
                     SelectionAction.NOTE -> noteForSelection = true
                     SelectionAction.COPY -> sel?.let { copy(context, it.text); vm.clearSelection() }
@@ -375,6 +377,26 @@ fun ReaderScreen(bookId: Long, onBack: () -> Unit) {
         confirmButton = { TextButton(onClick = vm::resumeFromIdle) { Text(stringResource(R.string.idle_continue)) } },
     )
 
+    lookup?.let { l ->
+        val offers by vm.offers.collectAsStateWithLifecycle()
+        val installedPacks by vm.installedPacks.collectAsStateWithLifecycle()
+        val packProgress by vm.packProgress.collectAsStateWithLifecycle()
+        val installedWikt by vm.installedWikt.collectAsStateWithLifecycle()
+        val wiktProgress by vm.wiktProgress.collectAsStateWithLifecycle()
+        val dictionaryChoice by vm.dictionaryChoice.collectAsStateWithLifecycle()
+        val synonymChoice by vm.synonymChoice.collectAsStateWithLifecycle()
+        DictionarySheet(
+            lookup = l,
+            offers = offers, installed = installedPacks, progress = packProgress,
+            installedWikt = installedWikt, wiktProgress = wiktProgress,
+            onLoadOffers = vm::loadOffers, onDownload = vm::downloadPack, onDownloadWikt = vm::downloadWikt,
+            choice = dictionaryChoice, onChoose = vm::chooseDictionary,
+            synonymChoice = synonymChoice, onChooseSynonyms = vm::chooseSynonyms,
+            onWord = vm::lookUpWord,
+            onBack = vm::lookupBack,
+            onDismiss = vm::closeLookup,
+        )
+    }
     if (showSettings) ReaderSettingsSheet(settings, vm::updateSettings, onDismiss = { showSettings = false })
     if (showContents) ContentsSheet(
         toc = state.ready?.toc.orEmpty(),
