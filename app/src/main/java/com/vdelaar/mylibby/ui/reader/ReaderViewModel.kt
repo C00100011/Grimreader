@@ -9,6 +9,7 @@ import com.vdelaar.mylibby.core.database.BookmarkEntity
 import com.vdelaar.mylibby.core.database.ReadingSessionEntity
 import com.vdelaar.mylibby.core.model.Book
 import com.vdelaar.mylibby.data.ReadingSpeed
+import com.vdelaar.mylibby.data.dict.toPackEntry
 import com.vdelaar.mylibby.data.StatsRepository
 import com.vdelaar.mylibby.di.AppContainer
 import com.vdelaar.mylibby.tts.TtsSegment
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -53,6 +55,34 @@ data class ReaderUiState(
     val opened: Boolean = false,
     /** The reading timer is paused because nothing has happened for a while (see [ReadingClock]). */
     val idlePaused: Boolean = false,
+)
+
+/** The dictionaries suggested in the popover when none is installed for the book's language. */
+sealed interface Offers {
+    data object Idle : Offers
+    data object Loading : Offers
+    data object Unavailable : Offers
+    /** [wikt] gives definitions and synonyms, [packs] (FreeDict) translations. */
+    data class Ready(val packs: List<com.vdelaar.mylibby.data.dict.PackInfo>, val wikt: List<com.vdelaar.mylibby.data.dict.WiktPackInfo> = emptyList()) : Offers
+}
+
+/** How a dictionary lookup stands. */
+sealed interface LookupResult {
+    data object Loading : LookupResult
+    data class Found(val entry: com.vdelaar.mylibby.data.WordEntry) : LookupResult
+    data object NotFound : LookupResult
+    /** Nothing is downloaded for the language of this book. */
+    data object NoDictionary : LookupResult
+}
+
+/** The dictionary popover: the [word] looked up, the [context] sentence it was in, and the words looked up before it ([trail]). */
+data class LookupUi(
+    val word: String,
+    val context: String = "",
+    val result: LookupResult = LookupResult.Loading,
+    val trail: List<String> = emptyList(),
+    /** Two-letter code of the book's language when no dictionary for it is on the device yet: the popover then offers to download one. */
+    val offerFor: String? = null,
 )
 
 data class SpeedUiState(
@@ -137,6 +167,11 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
     private var sessionOpen = false
 
     init {
+        // A dictionary that finishes installing while a word is open (the download ran on in the background): look the word up again.
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(c.dictionaryPacks.installed, c.wiktionary.installed) { a, b -> a.size + b.size }
+                .drop(1).collect { if (_lookup.value != null) retryLookup() }
+        }
         load()
     }
 
@@ -225,6 +260,8 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
             "selection" -> {
                 val e = BridgeJson.decodeFromString<SelectionEvent>(json)
                 _state.update { it.copy(selection = e, activeAnnotation = null) }
+                // Holding down on one word is how you look it up; a longer selection keeps its menu.
+                if (settings.value.lookupOnHold && com.vdelaar.mylibby.data.isSingleWord(e.text)) lookUpSelection()
             }
             "selectionCleared" -> _state.update { it.copy(selection = null) }
             "annotationClick" -> {
@@ -487,6 +524,116 @@ class ReaderViewModel(private val c: AppContainer, val bookId: Long) : ViewModel
     fun clearSelection() {
         js?.invoke("reader.clearSelection()")
         _state.update { it.copy(selection = null) }
+    }
+
+    private val _lookup = MutableStateFlow<LookupUi?>(null)
+    val lookup: StateFlow<LookupUi?> = _lookup.asStateFlow()
+    private var lookupJob: Job? = null
+
+    /** Opens the dictionary on the selected text (the selection goes away: the popover takes over). */
+    fun lookUpSelection() {
+        val sel = _state.value.selection ?: return
+        clearSelection()
+        startLookup(LookupUi(sel.text.trim(), sel.context))
+    }
+
+    /** A synonym tapped in the popover: look that up next, keeping the way back. */
+    fun lookUpWord(word: String) {
+        val now = _lookup.value ?: return
+        startLookup(LookupUi(word, now.context, trail = now.trail + now.word))
+    }
+
+    /** Back to the word before the current one. */
+    fun lookupBack() {
+        val now = _lookup.value ?: return
+        val prev = now.trail.lastOrNull() ?: return
+        startLookup(LookupUi(prev, now.context, trail = now.trail.dropLast(1)))
+    }
+
+    fun retryLookup() {
+        _lookup.value?.let { startLookup(it.copy(result = LookupResult.Loading)) }
+    }
+
+    val installedPacks = c.dictionaryPacks.installed
+    val packProgress = c.dictionaryPacks.progress
+    val installedWikt = c.wiktionary.installed
+    val wiktProgress = c.wiktionary.progress
+    private val _offers = MutableStateFlow<Offers>(Offers.Idle)
+    val offers: StateFlow<Offers> = _offers.asStateFlow()
+    private var offersFor: String? = null
+
+    /** Looks up which dictionaries exist for the language the popover is offering one for. */
+    fun loadOffers() {
+        val language = _lookup.value?.offerFor ?: return
+        if (offersFor == language && _offers.value !is Offers.Unavailable) return
+        offersFor = language
+        _offers.value = Offers.Loading
+        viewModelScope.launch {
+            val wikt = com.vdelaar.mylibby.data.dict.wiktionaryPacksFor(language)
+            _offers.value = try {
+                val mine = com.vdelaar.mylibby.data.dict.iso3(java.util.Locale.getDefault().language)
+                Offers.Ready(com.vdelaar.mylibby.data.dict.recommendPacks(c.dictionaryPacks.catalog(), com.vdelaar.mylibby.data.dict.iso3(language), mine), wikt)
+            } catch (e: java.io.IOException) {
+                // The list of FreeDict dictionaries needs the network; the Wiktionary ones are known.
+                if (wikt.isEmpty()) Offers.Unavailable else Offers.Ready(emptyList(), wikt)
+            }
+        }
+    }
+
+    /** Downloads as background work: leaving the book or the app does not stop it, and a notification says when it is ready. */
+    fun downloadPack(info: com.vdelaar.mylibby.data.dict.PackInfo) {
+        c.dictionaryPacks.dismissFailure(info.name)
+        com.vdelaar.mylibby.data.dict.DictionaryDownloads.startFreedict(c.appContext, info)
+    }
+
+    /** Same for a Wiktionary pack, which takes longer to read in than to download. */
+    fun downloadWikt(info: com.vdelaar.mylibby.data.dict.WiktPackInfo) {
+        c.wiktionary.dismissFailure(info.id)
+        com.vdelaar.mylibby.data.dict.DictionaryDownloads.startWiktionary(c.appContext, info)
+    }
+
+    /** The dictionary to show when a word is in several (kept for the next lookups). */
+    val dictionaryChoice: StateFlow<String> = settings.map { it.dictionaryChoice }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, settings.value.dictionaryChoice)
+
+    fun chooseDictionary(id: String) { updateSettings { it.copy(dictionaryChoice = id) } }
+
+    /** The dictionary whose synonyms to show; apart from the dictionary above them, since only some have any. */
+    val synonymChoice: StateFlow<String> = settings.map { it.synonymChoice }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, settings.value.synonymChoice)
+
+    fun chooseSynonyms(id: String) { updateSettings { it.copy(synonymChoice = id) } }
+
+    fun closeLookup() {
+        lookupJob?.cancel()
+        _lookup.value = null
+    }
+
+    private fun startLookup(ui: LookupUi) {
+        lookupJob?.cancel()
+        _lookup.value = ui.copy(result = LookupResult.Loading)
+        val language = com.vdelaar.mylibby.data.dictionaryLanguage(_state.value.book?.language ?: _state.value.ready?.language)
+        val source = com.vdelaar.mylibby.data.dict.iso3(language)
+        lookupJob = viewModelScope.launch {
+            val packs = c.dictionaryPacks
+            val offerFor = language.takeIf { !packs.hasSource(source) && !c.wiktionary.hasLanguage(it) }
+            val local = runCatching { packs.lookup(ui.word, source, language) }.getOrDefault(emptyList()).map { it.toPackEntry() }
+            // Every dictionary that knows the word: those with definitions first (in the language's own words before English ones),
+            // then the translations. The reader picks which one to look at in the popover.
+            val definitions = runCatching { c.wiktionary.lookup(ui.word, language) }.getOrDefault(emptyList())
+                .sortedByDescending { a -> com.vdelaar.mylibby.data.dict.WIKTIONARY_PACKS.firstOrNull { it.id == a.pack.id }?.native == true }
+                .mapNotNull { a ->
+                    val info = com.vdelaar.mylibby.data.dict.WIKTIONARY_PACKS.firstOrNull { it.id == a.pack.id }
+                    a.toPackEntry(info?.let { com.vdelaar.mylibby.data.dict.wiktLabel(c.appContext, it) } ?: a.pack.languageName)
+                }
+            val entry = (definitions + local).takeIf { it.isNotEmpty() }?.let { com.vdelaar.mylibby.data.WordEntry(ui.word, language, it) }
+            val result = when {
+                entry != null -> LookupResult.Found(entry)
+                offerFor != null -> LookupResult.NoDictionary
+                else -> LookupResult.NotFound
+            }
+            _lookup.update { if (it?.word == ui.word) it.copy(result = result, offerFor = offerFor) else it }
+        }
     }
 
     val currentBookmark: BookmarkEntity?

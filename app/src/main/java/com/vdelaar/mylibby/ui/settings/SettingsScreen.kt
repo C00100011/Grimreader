@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.AutoStories
@@ -195,6 +196,7 @@ fun SettingsScreen(navigator: AppNavigator, initialPage: String? = null) {
                     PaceReferenceGroup()
 
                         }
+                        SettingsPage.DICTIONARIES -> DictionaryGroup()
                         SettingsPage.READ_ALOUD -> {
                     SettingsGroup(stringResource(R.string.read_aloud)) {
                         Column(Modifier.padding(16.dp)) { VoicePickerSection() }
@@ -311,6 +313,7 @@ enum class SettingsPage(@androidx.annotation.StringRes val title: Int, val icon:
     APPEARANCE(R.string.appearance, Icons.Rounded.Palette),
     READING(R.string.reading, Icons.Rounded.AutoStories),
     READ_ALOUD(R.string.read_aloud, Icons.Rounded.RecordVoiceOver),
+    DICTIONARIES(R.string.dict_manage_title, Icons.AutoMirrored.Rounded.MenuBook),
     GOALS(R.string.goal_streak, Icons.Rounded.LocalFireDepartment),
     INTEGRATIONS(R.string.settings_integrations, Icons.Rounded.Hub),
     DATA(R.string.settings_data, Icons.Rounded.Storage),
@@ -340,6 +343,7 @@ private fun SettingsHome(
         SettingsPage.APPEARANCE -> androidx.compose.ui.res.stringResource(R.string.settings_appearance_sub)
         SettingsPage.READING -> androidx.compose.ui.res.stringResource(R.string.settings_reading_sub)
         SettingsPage.READ_ALOUD -> androidx.compose.ui.res.stringResource(R.string.settings_read_aloud_sub)
+        SettingsPage.DICTIONARIES -> androidx.compose.ui.res.stringResource(R.string.settings_dictionaries_sub)
         SettingsPage.GOALS -> androidx.compose.ui.res.stringResource(if (goal.type == GoalType.MINUTES) R.string.minutes_per_day_n else R.string.pages_per_day_n, goal.dailyTarget)
         SettingsPage.INTEGRATIONS -> androidx.compose.ui.res.stringResource(
             R.string.settings_integrations_sub,
@@ -360,8 +364,8 @@ private fun SettingsHome(
         Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 
-    SettingsGroup(androidx.compose.ui.res.stringResource(R.string.settings_group_personalise)) {
-        row(SettingsPage.APPEARANCE); row(SettingsPage.READING); row(SettingsPage.READ_ALOUD); row(SettingsPage.GOALS)
+    SettingsGroup(androidx.compose.ui.res.stringResource(R.string.settings_group_general)) {
+        row(SettingsPage.APPEARANCE); row(SettingsPage.READING); row(SettingsPage.READ_ALOUD); row(SettingsPage.DICTIONARIES); row(SettingsPage.GOALS)
     }
     SettingsGroup(androidx.compose.ui.res.stringResource(R.string.settings_group_connections)) { row(SettingsPage.INTEGRATIONS) }
     SettingsGroup(androidx.compose.ui.res.stringResource(R.string.settings_group_app)) { row(SettingsPage.DATA); row(SettingsPage.ABOUT) }

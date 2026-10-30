@@ -304,9 +304,34 @@ class Reader {
             const text = range.toString().trim()
             if (!text) return
             const cfi = this.view.getCFI(index, range)
+            const context = this.#sentenceAround(doc, range)
             this.lastSelection = { cfi, text, index }
-            post('selection', { cfi, text })
+            post('selection', { cfi, text, context })
         }, 250)
+    }
+
+    // The sentence a selection is in (for the dictionary): the paragraph's text between the sentence ends round it.
+    #sentenceAround(doc, range) {
+        try {
+            const node = range.startContainer
+            const el = node.nodeType === 1 ? node : node.parentElement
+            const block = el?.closest('p, li, blockquote, dd, h1, h2, h3, h4, h5, h6, div') ?? el
+            if (!block) return ''
+            const full = block.textContent ?? ''
+            const pre = doc.createRange()
+            pre.selectNodeContents(block)
+            pre.setEnd(range.startContainer, range.startOffset)
+            const from = pre.toString().length
+            const to = from + range.toString().length
+            const ends = /[.!?…]["'”’)]*\s/g
+            let start = 0, end = full.length, m
+            while ((m = ends.exec(full))) {
+                const at = m.index + m[0].length
+                if (at <= from) start = at
+                else { if (m.index + 1 >= to) { end = m.index + m[0].trimEnd().length; break } }
+            }
+            return full.slice(start, end).replace(/\s+/g, ' ').trim().slice(0, 300)
+        } catch (_) { return '' }
     }
 
     getSelection() {
