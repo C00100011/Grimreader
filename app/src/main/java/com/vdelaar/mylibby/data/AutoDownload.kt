@@ -59,7 +59,7 @@ class AutoDownloadWorker(context: Context, params: WorkerParameters) : Coroutine
             var page = 0
             var queued = 0
             do {
-                val res = c.api.grimmory().books(page = page, size = 100, sort = "addedOn", dir = "desc")
+                val res = c.api.catalog().books(page = page, size = 100, sort = "addedOn", dir = "desc")
                 val books = res.content.map { it.toBook() }
                 c.library.cache(books)
                 for (b in books) {
