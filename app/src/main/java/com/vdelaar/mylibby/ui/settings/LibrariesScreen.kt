@@ -97,6 +97,11 @@ private val groups = listOf(
         Lib("Atkinson Hyperlegible", null, "SIL OFL 1.1", R.string.lib_font_one, "Braille Institute of America, Inc.", "ofl-atkinson.txt"),
         Lib("OpenDyslexic", null, "SIL OFL 1.1", R.string.lib_font_one, "Abbie Gonzalez", "ofl-opendyslexic.txt"),
     )),
+    LibGroup(R.string.libs_group_dictionaries, listOf(
+        Lib("Wiktionary (via Kaikki.org)", null, "CC BY-SA 4.0", R.string.lib_wiktionary, "Wiktionary contributors; extracted with wiktextract by Tatu Ylönen", "cc-by-sa-4.0.txt"),
+        Lib("FreeDict", null, "GPL 2.0 or later", R.string.lib_freedict, "FreeDict contributors", "gpl-2.0-freedict.txt"),
+        Lib("XZ for Java", "1.10", "0BSD", R.string.lib_xz, "Lasse Collin and contributors", "0bsd-xz.txt"),
+    )),
     LibGroup(R.string.libs_group_content, listOf(
         Lib("Standard Ebooks", null, "CC0 1.0", R.string.lib_standard_ebooks, "Standard Ebooks", "cc0-1.0.txt"),
     )),

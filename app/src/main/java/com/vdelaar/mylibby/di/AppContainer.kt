@@ -36,6 +36,7 @@ class AppContainer(context: Context) {
     )
     val downloads = DownloadRepository(context, api, db, settings)
     val stats = StatsRepository(api, db, settings, sync)
+    val koboImport = com.vdelaar.mylibby.data.KoboImportRepository(context.applicationContext, db, pullBook = { id, title -> stats.pullBookSessions(id, title) }, pushSessions = { stats.pushSessions() })
     val shelfmark = ShelfmarkRepository(api, settings, tokens)
     val tts = TtsController(context, settings, appScope)
     val localBooks = com.vdelaar.mylibby.data.LocalBooksRepository(context, db)
@@ -48,6 +49,15 @@ class AppContainer(context: Context) {
         com.vdelaar.mylibby.core.network.HardcoverClient(tokens),
         library,
         com.vdelaar.mylibby.data.HardcoverCache(java.io.File(context.cacheDir, "hardcover")),
+    )
+    /** FreeDict dictionaries downloaded to the device: lookups in them need no network. */
+    val dictionaryPacks = com.vdelaar.mylibby.data.dict.DictionaryPacks(
+        java.io.File(context.filesDir, "dictionaries"), com.vdelaar.mylibby.data.OkDictionaryHttp(),
+        com.vdelaar.mylibby.data.dict.OkPackDownloader(), com.vdelaar.mylibby.data.dict.SqlitePackIndexStore(),
+    )
+    /** Wiktionary (via Kaikki.org) downloaded per language: definitions, examples and synonyms with no network. */
+    val wiktionary = com.vdelaar.mylibby.data.dict.WiktionaryPacks(
+        java.io.File(context.filesDir, "wiktionary"), com.vdelaar.mylibby.data.dict.OkPackDownloader(gzip = true), com.vdelaar.mylibby.data.dict.SqliteWiktStore(),
     )
     val discover = com.vdelaar.mylibby.data.DiscoverRepository(db, settings, library, com.vdelaar.mylibby.data.HardcoverCache(java.io.File(context.cacheDir, "openlibrary")))
     val swipe = com.vdelaar.mylibby.data.SwipeRepository(db, discover, library)

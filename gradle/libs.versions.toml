@@ -24,6 +24,7 @@ serialization = "1.11.0"
 coroutines = "1.11.0"
 coil = "3.6.3"
 onnxruntime = "1.29.0"
+xz = "1.10"
 mlkitGenai = "1.0.0-beta4"
 iconsExtended = "1.7.8"
 junit = "4.13.2"
@@ -70,6 +71,7 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor",
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntime" }
 mlkit-genai-prompt = { group = "com.google.mlkit", name = "genai-prompt", version.ref = "mlkitGenai" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }

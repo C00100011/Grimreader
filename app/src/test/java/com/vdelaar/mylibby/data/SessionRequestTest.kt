@@ -28,4 +28,19 @@ class SessionRequestTest {
         assertEquals(3, numbers.size)
         numbers.forEach { assertTrue("$it has too many decimals", it.substringAfter('.', "").length <= 2) }
     }
+
+    @Test fun aKoboSessionWithoutProgressSendsNoProgress() {
+        val r = session(0f, 0f).copy(source = ReadingSessionEntity.SOURCE_KOBO, pagesTurned = 12).toRequest()
+        assertEquals(null, r.startProgress)
+        assertEquals(null, r.endProgress)
+        assertEquals(null, r.progressDelta)
+        assertEquals("EPUB", r.bookType)
+        val json = AppJson.encodeToString(ReadingSessionRequest.serializer(), r)
+        assertTrue(json, !json.contains("Progress") || json.contains("\"startProgress\":null") || !json.contains("startProgress"))
+    }
+
+    @Test fun aSessionReadHereKeepsItsZeroProgress() {
+        val r = session(0f, 0f).toRequest()
+        assertEquals(0f, r.startProgress!!, 0f)
+    }
 }

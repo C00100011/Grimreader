@@ -9,12 +9,12 @@ import android.os.LocaleList
 import java.util.Locale
 
 /**
- * App language: "system", "en" or "nl". Android 13+ uses per-app languages (also shown in the
+ * App language: "system", "en", "es" or "nl". Android 13+ uses per-app languages (also shown in the
  * system's app settings); Android 12 wraps the activity/app context with the chosen locale.
  */
 object AppLanguage {
     const val SYSTEM = "system"
-    val options = listOf(SYSTEM, "en", "nl")
+    val options = listOf(SYSTEM, "en", "es", "nl")
 
     /** The language currently in effect for the app. */
     fun current(context: Context, stored: String): String {

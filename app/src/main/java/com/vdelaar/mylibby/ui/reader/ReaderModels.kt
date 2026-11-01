@@ -44,7 +44,7 @@ data class RelocateEvent(
 )
 
 @Serializable
-data class SelectionEvent(val cfi: String, val text: String)
+data class SelectionEvent(val cfi: String, val text: String, /** The sentence the selection is in, for the dictionary. */ val context: String = "")
 
 @Serializable
 data class CfiEvent(val cfi: String)

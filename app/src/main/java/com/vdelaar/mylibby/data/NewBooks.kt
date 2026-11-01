@@ -20,7 +20,7 @@ data class BookIdea(
     val year: Int? = null,
     val coverId: Long? = null,
     val isbn: String? = null,
-    /** ISO 639-1 codes ("en", "nl"). */
+    /** ISO 639-1 codes ("en", "es", "nl"). */
     val languages: List<String> = emptyList(),
     val subjects: List<String> = emptyList(),
 ) {

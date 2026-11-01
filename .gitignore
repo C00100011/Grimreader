@@ -24,3 +24,5 @@ local.properties
 *.jks
 signing.properties
 /CHANGELOG.md
+*.sqlite
+*.sqlite-*

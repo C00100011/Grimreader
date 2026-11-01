@@ -19,6 +19,7 @@ import java.io.File
 import java.io.FileInputStream
 
 enum class SelectionAction(val id: Int, @androidx.annotation.StringRes val label: Int) {
+    LOOKUP(1006, com.vdelaar.mylibby.R.string.sel_lookup),
     HIGHLIGHT(1001, com.vdelaar.mylibby.R.string.sel_highlight),
     NOTE(1002, com.vdelaar.mylibby.R.string.sel_note),
     COPY(1003, com.vdelaar.mylibby.R.string.sel_copy),

@@ -57,6 +57,37 @@ object Notifications {
             .setProgress(100, (progress * 100).toInt(), progress <= 0f)
             .build()
 
+    /** A dictionary being downloaded and read in; [fraction] is null while that is not known. */
+    fun dictionaryProgress(context: Context, label: String, fraction: Float?, preparing: Boolean): Notification =
+        NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
+            .setSmallIcon(R.drawable.ic_stat_book)
+            .setContentTitle(label)
+            .setContentText(context.getString(if (preparing) R.string.dict_preparing else R.string.dict_downloading))
+            .setContentIntent(openApp(context))
+            .setOnlyAlertOnce(true)
+            .setOngoing(true)
+            .setProgress(100, ((fraction ?: 0f) * 100).toInt(), fraction == null)
+            .build()
+
+    /** The end of a dictionary install: "ready", or why it did not work. Shown only when notifications are allowed. */
+    fun dictionaryFinished(context: Context, id: Int, label: String, error: String?) {
+        val n = NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
+            .setSmallIcon(R.drawable.ic_stat_book)
+            .setContentTitle(context.getString(if (error == null) R.string.dict_notif_done_title else R.string.dict_notif_failed_title))
+            .setContentText(if (error == null) context.getString(R.string.dict_notif_done_text, label) else "$label: $error")
+            .setContentIntent(openApp(context))
+            .setAutoCancel(true)
+            .build()
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
+        NotificationManagerCompat.from(context).notify(id, n)
+    }
+
+    private fun openApp(context: Context): PendingIntent = PendingIntent.getActivity(
+        context, 2,
+        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        PendingIntent.FLAG_IMMUTABLE,
+    )
+
     fun canNotify(context: Context): Boolean =
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 

@@ -85,6 +85,8 @@ import com.vdelaar.mylibby.core.model.Book
 import com.vdelaar.mylibby.core.model.ReadStatus
 import com.vdelaar.mylibby.core.model.formatSeriesNumber
 import com.vdelaar.mylibby.data.formatDuration
+import com.vdelaar.mylibby.data.formatShortDuration
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.res.pluralStringResource
 import com.vdelaar.mylibby.data.formatMinutes
 import com.vdelaar.mylibby.ui.appContainer
@@ -111,6 +113,7 @@ fun BookDetailContent(bookId: Long, navigator: AppNavigator, onBack: (() -> Unit
     val download by vm.download.collectAsStateWithLifecycle()
     val secondsRead by vm.secondsRead.collectAsStateWithLifecycle()
     val pace by vm.pace.collectAsStateWithLifecycle()
+    val sessions by vm.sessions.collectAsStateWithLifecycle()
     val appForPace by com.vdelaar.mylibby.ui.appContainer().settings.app.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -181,6 +184,10 @@ fun BookDetailContent(bookId: Long, navigator: AppNavigator, onBack: (() -> Unit
                             referencePhrase = stringResource(appForPace.paceReference.phrase),
                             onChange = { navigator.settingsPage("READING") },
                         )
+                    }
+                    if (sessions.isNotEmpty()) {
+                        Spacer(Modifier.height(12.dp))
+                        SessionsCard(sessions)
                     }
                     Spacer(Modifier.height(16.dp))
                     StatusRow(book.readStatus, vm::setStatus)
@@ -559,6 +566,53 @@ private fun ReviewCard(r: com.vdelaar.mylibby.core.network.BookReviewDto) {
                     Text(body, style = MaterialTheme.typography.bodyMedium, maxLines = if (expanded) Int.MAX_VALUE else 5, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     TextButton(onClick = { revealed = true }) { Text(stringResource(R.string.review_spoiler)) }
+                }
+            }
+        }
+    }
+}
+
+
+private const val SESSIONS_SHOWN = 5
+
+/** The reading sessions of this book, newest first: read here, from a Kobo or from Grimmory. */
+@Composable
+private fun SessionsCard(sessions: List<com.vdelaar.mylibby.core.database.ReadingSessionEntity>) {
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    val fmt = remember(locale) { java.time.format.DateTimeFormatter.ofPattern("EEE d MMM yyyy · HH:mm", locale) }
+    var all by rememberSaveable { mutableStateOf(false) }
+    val shown = if (all) sessions else sessions.take(SESSIONS_SHOWN)
+    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(vertical = 12.dp)) {
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                Text(stringResource(R.string.sessions_title), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    pluralStringResource(R.plurals.sessions_summary, sessions.size, sessions.size, formatShortDuration(sessions.sumOf { it.durationSeconds.toLong() })),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            shown.forEach { s ->
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(java.time.Instant.ofEpochMilli(s.startTime).atZone(java.time.ZoneId.systemDefault()).format(fmt), style = MaterialTheme.typography.bodyMedium)
+                        val source = stringResource(
+                            when (s.source) {
+                                com.vdelaar.mylibby.core.database.ReadingSessionEntity.SOURCE_KOBO -> R.string.sessions_source_kobo
+                                com.vdelaar.mylibby.core.database.ReadingSessionEntity.SOURCE_GRIMMORY -> R.string.sessions_source_grimmory
+                                else -> R.string.sessions_source_app
+                            }
+                        )
+                        Text(
+                            if (s.pagesTurned > 0) source + " · " + pluralStringResource(R.plurals.sessions_pages, s.pagesTurned, s.pagesTurned) else source,
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(com.vdelaar.mylibby.data.formatDuration(s.durationSeconds.toLong()), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+            if (sessions.size > SESSIONS_SHOWN) {
+                TextButton(onClick = { all = !all }, modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Text(if (all) stringResource(R.string.sessions_show_less) else stringResource(R.string.sessions_show_all, sessions.size))
                 }
             }
         }

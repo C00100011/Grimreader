@@ -87,6 +87,12 @@ data class ReaderSettings(
     val idleMultiplier: Float = 2f,
     /** Ask "Are you still reading?" when the timer pauses; off pauses silently. */
     val idlePrompt: Boolean = true,
+    /** Holding a single word opens the dictionary straight away; off, "Look up" is only in the selection menu. */
+    val lookupOnHold: Boolean = true,
+    /** The dictionary the reader picked in the popover when a word is in several ([com.vdelaar.mylibby.data.PackEntry.id]); empty takes the first. */
+    val dictionaryChoice: String = "",
+    /** The dictionary whose synonyms the reader picked in the popover; empty takes the first one that has any. */
+    val synonymChoice: String = "",
 )
 
 enum class SpeedMode { WORD, PHRASE }
@@ -216,7 +222,7 @@ data class AppState(
     val profile: Profile = Profile(),
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = true,
-    /** "system", "en" or "nl" (see AppLanguage). */
+    /** "system", "en", "es" or "nl" (see AppLanguage). */
     val language: String = "system",
     /** Keep every book of the library on this device, including newly added ones. */
     val autoDownloadAll: Boolean = false,

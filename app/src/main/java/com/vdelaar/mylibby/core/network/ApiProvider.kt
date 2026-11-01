@@ -146,7 +146,7 @@ class ApiProvider(
     fun grimmoryFor(baseUrl: String): GrimmoryApi {
         val url = normalize(baseUrl)
         require(url.toHttpUrlOrNull() != null) { com.vdelaar.mylibby.core.str(com.vdelaar.mylibby.R.string.err_invalid_address) }
-        return grimmoryCache.getOrPut(url) { retrofit(url, grimmoryClient).create(GrimmoryApi::class.java) }
+        return grimmoryCache.getOrPut(url) { retrofit(url, grimmoryClient).create(GrimmoryApi::class.java).let { KoreaderFixedApi(it) } }
     }
 
     fun shelfmark(): ShelfmarkApi? {

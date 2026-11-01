@@ -39,6 +39,7 @@ BOOKS = [
     (12, "Foundation and Empire", ["Isaac Asimov"], "Foundation", 2.0, ["Science Fiction"], "en"),
     (13, "Second Foundation", ["Isaac Asimov"], "Foundation", 3.0, ["Science Fiction"], "en"),
     (14, "I, Robot", ["Isaac Asimov"], None, None, ["Science Fiction"], "en"),
+    (15, "La Celestina", ["Fernando de Rojas"], None, None, ["Classic", "Literary"], "es"),
 ]
 DESCRIPTION = "A mock book from the Grimreader test server."
 progress = {}  # id -> percent of the web reader (what Grimreader writes)
@@ -440,7 +441,7 @@ class Handler(BaseHTTPRequestHandler):
                 "authors": [{"name": a, "count": sum(a in b[2] for b in BOOKS)} for a in authors],
                 "categories": [{"name": c, "count": sum(c in b[5] for b in BOOKS)} for c in cats],
                 "series": [{"name": "Foundation", "count": 3}],
-                "languages": [{"code": "en", "label": "English", "count": 12}, {"code": "nl", "label": "Nederlands", "count": 2}],
+                "languages": [{"code": "en", "label": "English", "count": 12}, {"code": "nl", "label": "Nederlands", "count": 2}, {"code": "es", "label": "Español", "count": 1}],
                 "readStatuses": [{"name": "UNREAD", "count": len(BOOKS)}],
             })
         if path == "/api/v1/app/authors":
