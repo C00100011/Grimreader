@@ -5,7 +5,6 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
-import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -17,7 +16,6 @@ import com.vdelaar.mylibby.core.database.DownloadEntity
 import com.vdelaar.mylibby.core.database.DownloadState
 import com.vdelaar.mylibby.core.model.Book
 import com.vdelaar.mylibby.core.network.ApiProvider
-import com.vdelaar.mylibby.notifications.Notifications
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -143,7 +141,9 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val dir = File(applicationContext.filesDir, "books").apply { mkdirs() }
         val target = File(dir, "$bookId.${DownloadRepository.extensionFor(type)}")
 
-        runCatching { setForeground(foregroundInfo(title, 0f)) }
+        // Plain background work, no foreground service: books are small, the work retries if the system stops it, and
+        // progress shows in the app. The automatic "Download all books" runs unattended, which Play doesn't allow a
+        // foreground service for.
         db.downloads().upsert(DownloadEntity(bookId, title, null, type, state = DownloadState.DOWNLOADING))
         return try {
             // Reuse a copy already streamed to the cache for reading.
@@ -153,7 +153,6 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
             } else {
                 DownloadRepository.fetch(container.api, bookId, type, target) { p ->
                     kotlinx.coroutines.runBlocking { db.downloads().updateProgress(bookId, p, DownloadState.DOWNLOADING) }
-                    runCatching { setForegroundAsync(foregroundInfo(title, p)) }
                 }
             }
             db.downloads().upsert(
@@ -169,18 +168,6 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
                 Result.failure()
             }
         }
-    }
-
-    override suspend fun getForegroundInfo(): ForegroundInfo =
-        foregroundInfo(inputData.getString(KEY_TITLE) ?: "Book", 0f)
-
-    private fun foregroundInfo(title: String, progress: Float): ForegroundInfo {
-        val id = 5000 + (inputData.getLong(KEY_BOOK_ID, 0) % 1000).toInt()
-        return ForegroundInfo(
-            id,
-            Notifications.downloadProgress(applicationContext, title, progress),
-            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
-        )
     }
 
     companion object {

@@ -49,6 +49,8 @@ class DictionaryDownloadWorker(context: Context, params: WorkerParameters) : Cor
     // The progress notification goes when the work ends, so "ready" needs an id of its own.
     private val notificationId = 6000 + (id.hashCode() and 0xfff)
     private val finishedId = notificationId + 0x1000
+    // A foreground service must be one the user can stop: the notification has a cancel button.
+    private val cancel = WorkManager.getInstance(applicationContext).createCancelPendingIntent(getId())
 
     override suspend fun doWork(): Result {
         val container = (applicationContext as MyLibbyApp).container
@@ -106,7 +108,7 @@ class DictionaryDownloadWorker(context: Context, params: WorkerParameters) : Cor
     override suspend fun getForegroundInfo(): ForegroundInfo = foreground(id, 0f, false)
 
     private fun foreground(label: String, fraction: Float?, preparing: Boolean) = ForegroundInfo(
-        notificationId, Notifications.dictionaryProgress(applicationContext, label, fraction, preparing), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+        notificationId, Notifications.dictionaryProgress(applicationContext, label, fraction, preparing, cancel), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
     )
 
     companion object {
