@@ -370,7 +370,6 @@
     <string name="resume">Resume</string>
     <string name="saving">Saving…</string>
     <string name="saving_offline">Saving for offline reading…</string>
-    <string name="saving_offline_title">Saving for offline</string>
     <string name="scroll">Scroll</string>
     <string name="search_failed">Search failed</string>
     <string name="search_in">Search %1$s</string>

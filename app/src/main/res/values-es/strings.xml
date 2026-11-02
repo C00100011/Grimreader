@@ -370,7 +370,6 @@
     <string name="resume">Reanudar</string>
     <string name="saving">Guardando…</string>
     <string name="saving_offline">Guardando para leer sin conexión…</string>
-    <string name="saving_offline_title">Guardando sin conexión</string>
     <string name="scroll">Desplazamiento</string>
     <string name="search_failed">Falló la búsqueda</string>
     <string name="search_in">Buscar en %1$s</string>

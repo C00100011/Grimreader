@@ -369,7 +369,6 @@
     <string name="resume">Hervatten</string>
     <string name="saving">Opslaan…</string>
     <string name="saving_offline">Opslaan om offline te lezen…</string>
-    <string name="saving_offline_title">Opslaan voor offline</string>
     <string name="scroll">Scrollen</string>
     <string name="search_failed">Zoeken mislukt</string>
     <string name="search_in">Zoek %1$s</string>

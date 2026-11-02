@@ -135,6 +135,7 @@ class WiktionaryPacks(
                     entries = store.build(File(tmp, "index.db")) { add -> readLines(file, job) { fraction -> setProgress(info.id, PackProgress.Preparing(fraction)) }.forEach { add(it.word, it.entry) } }
                 } catch (e: EOFException) { throw IOException("The download is damaged; try again", e) } catch (e: ZipException) { throw IOException("The download is damaged; try again", e) }
                 if (entries == 0) throw IOException("The download holds no words")
+                currentCoroutineContext().ensureActive()
                 file.delete()
                 val installed = InstalledWikt(info.id, info.language, info.languageName, info.edition, entries, tmp.listFiles().orEmpty().sumOf { it.length() })
                 File(tmp, "meta.json").writeText(AppJson.encodeToString(installed))
