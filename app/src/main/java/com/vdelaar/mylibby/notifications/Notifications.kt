@@ -47,18 +47,8 @@ object Notifications {
         )
     }
 
-    fun downloadProgress(context: Context, title: String, progress: Float): Notification =
-        NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
-            .setSmallIcon(R.drawable.ic_stat_book)
-            .setContentTitle(str(R.string.saving_offline_title))
-            .setContentText(title)
-            .setOnlyAlertOnce(true)
-            .setOngoing(true)
-            .setProgress(100, (progress * 100).toInt(), progress <= 0f)
-            .build()
-
-    /** A dictionary being downloaded and read in; [fraction] is null while that is not known. */
-    fun dictionaryProgress(context: Context, label: String, fraction: Float?, preparing: Boolean): Notification =
+    /** A dictionary being downloaded and read in; [fraction] is null while that is not known. [cancel] stops the work. */
+    fun dictionaryProgress(context: Context, label: String, fraction: Float?, preparing: Boolean, cancel: PendingIntent): Notification =
         NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
             .setSmallIcon(R.drawable.ic_stat_book)
             .setContentTitle(label)
@@ -67,6 +57,7 @@ object Notifications {
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setProgress(100, ((fraction ?: 0f) * 100).toInt(), fraction == null)
+            .addAction(0, context.getString(R.string.action_cancel), cancel)
             .build()
 
     /** The end of a dictionary install: "ready", or why it did not work. Shown only when notifications are allowed. */

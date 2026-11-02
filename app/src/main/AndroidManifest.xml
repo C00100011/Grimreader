@@ -83,6 +83,8 @@
             </intent-filter>
         </service>
 
+        <!-- Only for dictionary downloads (up to ~500 MB plus building the index), which the user starts and can cancel
+             from the progress notification. Declared in Play Console as Data sync: user-initiated download. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"

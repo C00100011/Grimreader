@@ -159,6 +159,8 @@ class DictionaryPacks(
                 if (info.sha512.isNotBlank() && !sha512(archive).equals(info.sha512, true)) throw IOException("The download is damaged; try again")
                 setProgress(info.name, PackProgress.Preparing(null))
                 val installed = unpack(info, archive, tmp)
+                // Unpacking and indexing don't stop halfway: a download cancelled meanwhile must not be kept.
+                currentCoroutineContext().ensureActive()
                 File(tmp, "meta.json").writeText(AppJson.encodeToString(installed))
                 archive.delete()
                 closeHandle(info.name)
