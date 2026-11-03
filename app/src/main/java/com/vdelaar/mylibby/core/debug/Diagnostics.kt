@@ -60,7 +60,7 @@ class ConnectionProbe(private val c: AppContainer) {
         val app = c.settings.app.value
         when (target) {
             GRIMMORY -> probe(target, server.grimmoryUrl.takeIf { it.isNotBlank() }?.let { ApiProvider.normalize(it) } ?: lastTried(GRIMMORY).orEmpty(), "api/v1/public-settings", c.api.grimmoryClient) { signedIn ->
-                if (signedIn) authStep("Signed in (token still valid)") { c.api.grimmory().continueReading(1) } else null
+                if (signedIn) authStep("Signed in (token still valid)") { c.api.catalog().continueReading(1) } else null
             }
             SHELFMARK -> probe(target, ApiProvider.normalize(server.shelfmarkUrl), "api/status", c.api.shelfmarkHttp) {
                 val sm = c.api.shelfmark()

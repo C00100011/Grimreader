@@ -1,0 +1,72 @@
+{
+  "links": [
+    {
+      "rel": "self",
+      "href": "/api/v1/books/facets?facet=read_status%3AREAD",
+      "type": "application/json"
+    }
+  ],
+  "facets": [
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "series",
+        "title": "Series"
+      },
+      "links": [
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=read_status%3AREAD&facet=series%3AAlpha+Saga",
+          "type": "application/json",
+          "title": "Alpha Saga",
+          "value": "Alpha Saga",
+          "properties": {
+            "numberOfItems": 1
+          }
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "read_status",
+        "title": "Read Status"
+      },
+      "links": [
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=read_status%3AREAD&facet=read_status%3AUNSET",
+          "type": "application/json",
+          "title": "UNSET",
+          "value": "UNSET",
+          "properties": {
+            "numberOfItems": 5
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=read_status%3AREAD&facet=read_status%3AREADING",
+          "type": "application/json",
+          "title": "READING",
+          "value": "READING",
+          "properties": {
+            "numberOfItems": 2
+          }
+        },
+        {
+          "rel": [
+            "self",
+            "facet"
+          ],
+          "href": "/api/v1/books/page?facet=read_status%3AREAD",
+          "type": "application/json",
+          "title": "READ",
+          "value": "READ",
+          "properties": {
+            "numberOfItems": 1
+          }
+        }
+      ]
+    }
+  ]
+}

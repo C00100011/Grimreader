@@ -1,0 +1,213 @@
+{
+  "links": [
+    {
+      "rel": "self",
+      "href": "/api/v1/books/facets",
+      "type": "application/json"
+    }
+  ],
+  "facets": [
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "author",
+        "title": "Authors"
+      },
+      "links": [
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=author%3AAnn+Author",
+          "type": "application/json",
+          "title": "Ann Author",
+          "value": "Ann Author",
+          "properties": {
+            "numberOfItems": 4
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=author%3ACor+Schrijver",
+          "type": "application/json",
+          "title": "Cor Schrijver",
+          "value": "Cor Schrijver",
+          "properties": {
+            "numberOfItems": 2
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=author%3ABob+Writer",
+          "type": "application/json",
+          "title": "Bob Writer",
+          "value": "Bob Writer",
+          "properties": {
+            "numberOfItems": 1
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=author%3AEve+Penn",
+          "type": "application/json",
+          "title": "Eve Penn",
+          "value": "Eve Penn",
+          "properties": {
+            "numberOfItems": 1
+          }
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "genre",
+        "title": "Genre"
+      },
+      "links": []
+    },
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "series",
+        "title": "Series"
+      },
+      "links": [
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=series%3AAlpha+Saga",
+          "type": "application/json",
+          "title": "Alpha Saga",
+          "value": "Alpha Saga",
+          "properties": {
+            "numberOfItems": 3
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=series%3AGamma+Reeks",
+          "type": "application/json",
+          "title": "Gamma Reeks",
+          "value": "Gamma Reeks",
+          "properties": {
+            "numberOfItems": 2
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=series%3AEps+Cycle",
+          "type": "application/json",
+          "title": "Eps Cycle",
+          "value": "Eps Cycle",
+          "properties": {
+            "numberOfItems": 1
+          }
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "language",
+        "title": "Language"
+      },
+      "links": [
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=language%3Aen",
+          "type": "application/json",
+          "title": "en",
+          "value": "en",
+          "properties": {
+            "numberOfItems": 6
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=language%3Anl",
+          "type": "application/json",
+          "title": "nl",
+          "value": "nl",
+          "properties": {
+            "numberOfItems": 2
+          }
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "library",
+        "title": "Library"
+      },
+      "links": [
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=library%3A1",
+          "type": "application/json",
+          "title": "1",
+          "value": "1",
+          "properties": {
+            "numberOfItems": 8
+          }
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "shelf",
+        "title": "Shelf"
+      },
+      "links": [
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=shelf%3A1",
+          "type": "application/json",
+          "title": "1",
+          "value": "1",
+          "properties": {
+            "numberOfItems": 1
+          }
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "rel": "facet",
+        "key": "read_status",
+        "title": "Read Status"
+      },
+      "links": [
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=read_status%3AUNSET",
+          "type": "application/json",
+          "title": "UNSET",
+          "value": "UNSET",
+          "properties": {
+            "numberOfItems": 5
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=read_status%3AREADING",
+          "type": "application/json",
+          "title": "READING",
+          "value": "READING",
+          "properties": {
+            "numberOfItems": 2
+          }
+        },
+        {
+          "rel": "facet",
+          "href": "/api/v1/books/page?facet=read_status%3AREAD",
+          "type": "application/json",
+          "title": "READ",
+          "value": "READ",
+          "properties": {
+            "numberOfItems": 1
+          }
+        }
+      ]
+    }
+  ]
+}
