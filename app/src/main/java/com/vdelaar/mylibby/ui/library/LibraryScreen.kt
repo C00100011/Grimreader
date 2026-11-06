@@ -37,6 +37,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.automirrored.rounded.ViewList
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Checklist
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudDownload
@@ -61,6 +63,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -93,7 +96,15 @@ import com.vdelaar.mylibby.ui.components.BookCover
 import com.vdelaar.mylibby.ui.components.EmptyState
 import com.vdelaar.mylibby.ui.components.ErrorState
 import com.vdelaar.mylibby.ui.components.OfflineBanner
+import com.vdelaar.mylibby.core.str
+import com.vdelaar.mylibby.data.FAVOURITES_SHELF
+import com.vdelaar.mylibby.data.cleanShelfName
 import com.vdelaar.mylibby.ui.navigation.AppNavigator
+import com.vdelaar.mylibby.ui.shelves.AddToShelvesSheet
+import com.vdelaar.mylibby.ui.shelves.ShelfNameDialog
+import com.vdelaar.mylibby.ui.shelves.ShelfPane
+import com.vdelaar.mylibby.ui.shelves.ShelvesTab
+import com.vdelaar.mylibby.ui.shelves.ShelvesViewModel
 
 @Composable
 fun LibraryScreen(navigator: AppNavigator) {
@@ -106,12 +117,16 @@ fun LibraryScreen(navigator: AppNavigator) {
         BackHandler(enabled = state.selectedBookId != null) { vm.select(null) }
         Row(Modifier.fillMaxSize()) {
             Box(Modifier.weight(if (layout.hasVerticalHinge) 1f else 0.48f).fillMaxHeight()) {
-                LibraryList(vm, navigator, compactColumns = true, onBook = { vm.select(it.id) })
+                LibraryList(vm, navigator, compactColumns = true, onBook = { vm.select(it.id) }, onShelf = vm::selectShelf)
             }
             VerticalDivider()
             Box(Modifier.weight(if (layout.hasVerticalHinge) 1f else 0.52f).fillMaxHeight()) {
                 val id = state.selectedBookId?.takeIf { sel -> state.books.any { it.id == sel } } ?: state.books.firstOrNull()?.id
-                if (id != null) {
+                if (state.tab == LibraryTab.SHELVES) {
+                    // On the Shelves tab the right-hand side shows the open shelf, not a book.
+                    val shelf = state.selectedShelfId ?: FAVOURITES_SHELF
+                    androidx.compose.runtime.key(shelf) { ShelfPane(shelf, navigator, onGone = { vm.selectShelf(null) }) }
+                } else if (id != null) {
                     androidx.compose.runtime.key(id) { BookDetailContent(id, navigator, onBack = null, inPane = true) }
                 } else {
                     EmptyState("📚", stringResource(R.string.select_a_book), stringResource(R.string.select_a_book_body), Modifier.align(Alignment.Center))
@@ -119,17 +134,21 @@ fun LibraryScreen(navigator: AppNavigator) {
             }
         }
     } else {
-        LibraryList(vm, navigator, compactColumns = false, onBook = { navigator.openBook(it.id) })
+        LibraryList(vm, navigator, compactColumns = false, onBook = { navigator.openBook(it.id) }, onShelf = navigator::shelf)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LibraryList(vm: LibraryViewModel, navigator: AppNavigator, compactColumns: Boolean, onBook: (Book) -> Unit) {
+private fun LibraryList(vm: LibraryViewModel, navigator: AppNavigator, compactColumns: Boolean, onBook: (Book) -> Unit, onShelf: (Long) -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     val favIds by vm.favouriteIds.collectAsStateWithLifecycle()
     val dlIds by vm.downloadedIds.collectAsStateWithLifecycle()
     var showFilters by rememberSaveable { mutableStateOf(false) }
+    var showShelfSheet by rememberSaveable { mutableStateOf(false) }
+    var showNewShelf by rememberSaveable { mutableStateOf(false) }
+    val shelvesVm = appViewModel { ShelvesViewModel(it) }
+    val shelfCards by shelvesVm.cards.collectAsStateWithLifecycle()
 
     val selecting = state.selecting
     BackHandler(enabled = selecting) { vm.clearSelection() }
@@ -149,12 +168,13 @@ private fun LibraryList(vm: LibraryViewModel, navigator: AppNavigator, compactCo
                     onClose = vm::clearSelection,
                     onSelectAll = vm::selectAll,
                     onFavourite = vm::favouriteSelected,
+                    onAddToShelf = { showShelfSheet = true },
                     onDownload = vm::downloadSelected,
                     onRemoveDownloads = vm::removeSelectedDownloads,
                 )
             } else androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth()) {
               // In a narrow list pane the five actions leave no room for the title: put them on a row below it.
-              val stacked = compactColumns && maxWidth < 420.dp
+              val stacked = compactColumns && maxWidth < 420.dp && state.tab == LibraryTab.BOOKS // the other tabs have at most one button
               val title: @Composable (Modifier) -> Unit = { m ->
                   Text(stringResource(R.string.tab_books), style = MaterialTheme.typography.headlineMedium, modifier = m.padding(start = 4.dp))
               }
@@ -171,6 +191,8 @@ private fun LibraryList(vm: LibraryViewModel, navigator: AppNavigator, compactCo
                             Icon(Icons.Rounded.Tune, stringResource(R.string.filters))
                         }
                     }
+                } else if (state.tab == LibraryTab.SHELVES) {
+                    IconButton(onClick = { showNewShelf = true }) { Icon(Icons.Rounded.Add, stringResource(R.string.shelf_new)) }
                 }
               }
               if (stacked) {
@@ -213,9 +235,18 @@ private fun LibraryList(vm: LibraryViewModel, navigator: AppNavigator, compactCo
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        PrimaryTabRow(selectedTabIndex = state.tab.ordinal, containerColor = MaterialTheme.colorScheme.surface) {
-            LibraryTab.entries.forEach { t ->
-                Tab(selected = state.tab == t, onClick = { vm.setTab(t) }, text = { Text(stringResource(t.label)) })
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth()) {
+            // Four tabs share the width; on a narrow screen or with large text a label would break inside the word, so the row scrolls then.
+            val tabs: @Composable () -> Unit = {
+                LibraryTab.entries.forEach { t ->
+                    Tab(selected = state.tab == t, onClick = { vm.setTab(t) }, text = { Text(stringResource(t.label), maxLines = 1) })
+                }
+            }
+            val fontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale
+            if (maxWidth / LibraryTab.entries.size < 96.dp * fontScale) {
+                PrimaryScrollableTabRow(selectedTabIndex = state.tab.ordinal, edgePadding = 8.dp, containerColor = MaterialTheme.colorScheme.surface, tabs = tabs)
+            } else {
+                PrimaryTabRow(selectedTabIndex = state.tab.ordinal, containerColor = MaterialTheme.colorScheme.surface, tabs = tabs)
             }
         }
         // Pull down on any of the three lists to refresh (and sync, when a server is connected).
@@ -233,6 +264,11 @@ private fun LibraryList(vm: LibraryViewModel, navigator: AppNavigator, compactCo
                     }
                     LibraryTab.SERIES -> SeriesList(state, navigator, onRetry = vm::loadSeries)
                     LibraryTab.AUTHORS -> AuthorList(state, navigator, onRetry = vm::loadAuthors)
+                    LibraryTab.SHELVES -> ShelvesTab(
+                        shelvesVm, query = state.filter.search,
+                        selectedId = if (compactColumns) state.selectedShelfId ?: FAVOURITES_SHELF else null,
+                        compactColumns = compactColumns, onOpen = onShelf, onNew = { showNewShelf = true }, onMessage = vm::showMessage,
+                    )
                 }
             }
         }
@@ -241,6 +277,21 @@ private fun LibraryList(vm: LibraryViewModel, navigator: AppNavigator, compactCo
     androidx.compose.material3.SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 
+    if (showShelfSheet) {
+        AddToShelvesSheet(state.multiSelect, onDismiss = { showShelfSheet = false; vm.clearSelection() }, onMessage = vm::showMessage)
+    }
+    if (showNewShelf) {
+        ShelfNameDialog(
+            title = stringResource(R.string.shelf_new),
+            confirm = stringResource(R.string.shelf_create),
+            initial = "",
+            existing = shelfCards.orEmpty().filter { !it.favourites && !it.shared }.map { it.name },
+            onDismiss = { showNewShelf = false },
+            onConfirm = { name ->
+                shelvesVm.create(name).also { if (it == null) vm.showMessage(str(R.string.shelf_created, cleanShelfName(name))) }
+            },
+        )
+    }
     if (showFilters) {
         FilterSheet(state.filter, state.options, onApply = { vm.setFilter(it) }, onClear = vm::clearFilters, onDismiss = { showFilters = false })
     }
@@ -446,6 +497,7 @@ private fun SelectionBar(
     onClose: () -> Unit,
     onSelectAll: () -> Unit,
     onFavourite: (Boolean) -> Unit,
+    onAddToShelf: () -> Unit,
     onDownload: () -> Unit,
     onRemoveDownloads: () -> Unit,
 ) {
@@ -458,6 +510,7 @@ private fun SelectionBar(
             IconButton(onClick = { onFavourite(!allFavourite) }) {
                 Icon(if (allFavourite) Icons.Rounded.HeartBroken else Icons.Rounded.Favorite, stringResource(if (allFavourite) R.string.remove_from_favorites else R.string.add_to_favorites))
             }
+            IconButton(onClick = onAddToShelf) { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, stringResource(R.string.add_to_shelf)) }
             if (anyNotDownloaded) IconButton(onClick = onDownload) { Icon(Icons.Rounded.CloudDownload, stringResource(R.string.download_selected)) }
             if (anyDownloaded) IconButton(onClick = onRemoveDownloads) { Icon(Icons.Rounded.DeleteSweep, stringResource(R.string.remove_downloads)) }
         }

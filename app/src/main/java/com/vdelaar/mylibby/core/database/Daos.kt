@@ -1,9 +1,11 @@
 package com.vdelaar.mylibby.core.database
 
 import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -23,6 +25,9 @@ interface BookDao {
 
     @Query("SELECT * FROM books WHERE id IN (:ids)")
     fun observeMany(ids: List<Long>): Flow<List<BookEntity>>
+
+    @Query("SELECT * FROM books WHERE id IN (:ids)")
+    suspend fun getMany(ids: List<Long>): List<BookEntity>
 
     @Query("SELECT * FROM books ORDER BY lastReadTime DESC LIMIT :limit")
     suspend fun recentlyRead(limit: Int): List<BookEntity>
@@ -363,6 +368,9 @@ interface LocalBookDao {
     @Query("SELECT * FROM local_books WHERE id = :id")
     suspend fun get(id: Long): LocalBookEntity?
 
+    @Query("SELECT * FROM local_books WHERE id IN (:ids)")
+    suspend fun getMany(ids: List<Long>): List<LocalBookEntity>
+
     @Upsert
     suspend fun upsert(b: LocalBookEntity)
 
@@ -423,4 +431,62 @@ interface WantedDao {
 
     @Query("UPDATE wanted SET list = :list WHERE `key` = :key")
     suspend fun setList(key: String, list: String)
+}
+
+/** A shelf with the number of books on it. */
+data class ShelfRow(@Embedded val shelf: ShelfEntity, val bookCount: Int)
+
+@Dao
+interface ShelfDao {
+    @Query(
+        """SELECT s.*, (SELECT COUNT(*) FROM shelf_books b WHERE b.shelfId = s.localId AND b.pending != 'DELETE') AS bookCount
+           FROM shelves s WHERE s.pending != 'DELETE' ORDER BY s.name COLLATE NOCASE"""
+    )
+    fun observeRows(): Flow<List<ShelfRow>>
+
+    @Query("SELECT * FROM shelves WHERE localId = :id AND pending != 'DELETE'")
+    fun observe(id: Long): Flow<ShelfEntity?>
+
+    @Query("SELECT * FROM shelves WHERE localId = :id")
+    suspend fun get(id: Long): ShelfEntity?
+
+    @Query("SELECT * FROM shelves")
+    suspend fun all(): List<ShelfEntity>
+
+    @Insert
+    suspend fun insert(shelf: ShelfEntity): Long
+
+    @Update
+    suspend fun update(shelf: ShelfEntity)
+
+    @Query("DELETE FROM shelves WHERE localId = :id")
+    suspend fun delete(id: Long)
+
+    // Books on shelves -------------------------------------------------------------------------
+
+    @Query("SELECT * FROM shelf_books WHERE shelfId = :shelfId AND pending != 'DELETE' ORDER BY addedAt DESC")
+    fun observeMembers(shelfId: Long): Flow<List<ShelfBookEntity>>
+
+    /** Every book on every shelf, newest first: what the shelf cards pick their covers from. */
+    @Query("SELECT * FROM shelf_books WHERE pending != 'DELETE' ORDER BY addedAt DESC")
+    fun observeAllMembers(): Flow<List<ShelfBookEntity>>
+
+    /** Which shelves these books are on. */
+    @Query("SELECT * FROM shelf_books WHERE bookId IN (:bookIds) AND pending != 'DELETE'")
+    fun observeMembersOf(bookIds: List<Long>): Flow<List<ShelfBookEntity>>
+
+    @Query("SELECT * FROM shelf_books WHERE shelfId = :shelfId")
+    suspend fun members(shelfId: Long): List<ShelfBookEntity>
+
+    @Query("SELECT * FROM shelf_books WHERE pending != 'NONE'")
+    suspend fun pendingMembers(): List<ShelfBookEntity>
+
+    @Upsert
+    suspend fun upsertMembers(list: List<ShelfBookEntity>)
+
+    @Query("DELETE FROM shelf_books WHERE shelfId = :shelfId AND bookId IN (:bookIds)")
+    suspend fun deleteMembers(shelfId: Long, bookIds: List<Long>)
+
+    @Query("DELETE FROM shelf_books WHERE bookId = :bookId")
+    suspend fun deleteBook(bookId: Long)
 }

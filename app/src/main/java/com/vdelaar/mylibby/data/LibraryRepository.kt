@@ -284,7 +284,8 @@ class LibraryRepository(
             val pending = db.outbox().all().filter { it.type in FAV_TYPES }.map { it.bookId }.toSet()
             val local = db.favourites().ids().toSet()
             val remote = all.map { it.id }.toSet()
-            for (id in local - remote - pending) db.favourites().remove(id)
+            // Books imported from the device (negative ids) are not on the server's shelf, and stay favourites.
+            for (id in (local - remote - pending).filter { it > 0 }) db.favourites().remove(id)
             db.favourites().addAll((remote - local).map { FavouriteEntity(it) })
         }
     }
@@ -311,12 +312,13 @@ class LibraryRepository(
 
     /** Favorite or unfavorite many books with a single Grimmory call. */
     suspend fun setFavourites(allIds: Set<Long>, favourite: Boolean) = withContext(Dispatchers.IO) {
-        val bookIds = if (settings.app.value.noServer) emptySet() else allIds.filter { it >= 0 }.toSet()
-        if (bookIds.isEmpty()) return@withContext
-        for (id in bookIds) {
+        for (id in allIds) {
             if (favourite) db.favourites().add(FavouriteEntity(id)) else db.favourites().remove(id)
             db.outbox().deleteFor(id, FAV_TYPES)
         }
+        // Books imported from the device and local-only mode: favourites stay on this device.
+        val bookIds = if (settings.app.value.noServer) emptySet() else allIds.filter { it > 0 }.toSet()
+        if (bookIds.isEmpty()) return@withContext
         try {
             val shelfId = ensureFavouritesShelf()
             val r = api.grimmory().assignShelves(

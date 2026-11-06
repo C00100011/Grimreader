@@ -109,6 +109,7 @@ class OnboardingViewModel(private val c: AppContainer, connectOnly: Boolean = fa
         viewModelScope.launch {
             c.settings.updateApp { it.copy(localOnly = false, demo = false) }
             runCatching { c.library.refreshFavourites() }
+            runCatching { c.shelves.pull(); c.shelves.push() }
         }
         val user = c.settings.server.value.username.ifBlank { fallbackName }
         _state.update { it.copy(connecting = false, password = "", username = user, name = it.name.ifBlank { user.replaceFirstChar { ch -> ch.uppercase() } }) }

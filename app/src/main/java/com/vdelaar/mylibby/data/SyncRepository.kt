@@ -53,6 +53,7 @@ class SyncRepository(
     private val settings: SettingsRepository,
     private val tokens: TokenStore,
     private val library: LibraryRepository,
+    private val shelves: ShelfRepository,
     private val reading: ReadingRepository,
     private val scope: CoroutineScope,
     /** Sends the outbox, progress, highlights, bookmarks and sessions; true when something could not be sent. */
@@ -97,6 +98,7 @@ class SyncRepository(
             _progress.value = SyncProgress(running = true, step = SyncStep.SENDING, forced = forced)
             failed = push()
             runCatching { library.refreshFavourites() }
+            if (runCatching { shelves.pull() }.getOrDefault(true)) failed = true
             if (full) {
                 _progress.value = SyncProgress(running = true, step = SyncStep.BOOKS, forced = forced)
                 val all = pullBooks(forced)

@@ -8,6 +8,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class BookRoute(val id: Long)
 @Serializable data class ReaderRoute(val id: Long)
 @Serializable data class CollectionRoute(val kind: String, val name: String)
+/** A shelf of the reader's ([com.vdelaar.mylibby.data.FAVOURITES_SHELF] = Favourites). */
+@Serializable data class ShelfRoute(val id: Long)
 /** [page] = a SettingsPage name to open directly (e.g. "INTEGRATIONS"). */
 @Serializable data class SettingsRoute(val page: String? = null)
 @Serializable data object SwipeRoute

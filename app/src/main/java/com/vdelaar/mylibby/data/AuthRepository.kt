@@ -197,6 +197,7 @@ class AuthRepository(
         settings.updateApp { it.copy(favouritesShelfId = null) }
         db.books().clear()
         db.favourites().clear()
+        detachShelvesFromServer(db)
     }
 }
 

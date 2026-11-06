@@ -112,6 +112,13 @@ interface GrimmoryApi {
     @POST("api/v1/shelves")
     suspend fun createShelf(@Body body: ShelfCreateRequest): ShelfDto
 
+    /** Rename or re-icon a shelf; only its owner may (403 otherwise). The request replaces name, icon and visibility. */
+    @PUT("api/v1/shelves/{id}")
+    suspend fun updateShelf(@Path("id") id: Long, @Body body: ShelfCreateRequest): ShelfDto
+
+    @DELETE("api/v1/shelves/{id}")
+    suspend fun deleteShelf(@Path("id") id: Long): Response<Unit>
+
     @POST("api/v1/books/shelves")
     suspend fun assignShelves(@Body body: ShelvesAssignmentRequest): Response<ResponseBody>
 

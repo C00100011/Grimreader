@@ -57,7 +57,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val failed = if (inputData.getBoolean(SyncScheduler.FULL, false)) {
             c.librarySync.run(full = true)
         } else {
-            pushPendingChanges(c).also { if (runAttemptCount == 0) c.library.refreshFavourites() }
+            pushPendingChanges(c).also { if (runAttemptCount == 0) { c.library.refreshFavourites(); c.shelves.pull() } }
         }
         return if (failed && runAttemptCount < 5) Result.retry() else Result.success()
     }
@@ -101,6 +101,7 @@ suspend fun pushPendingChanges(c: com.vdelaar.mylibby.di.AppContainer): Boolean 
         }
     }
 
+    if (c.shelves.push()) failed = true
     c.reading.pushAllProgress()
     c.reading.pushAnnotations()
     c.reading.pushBookmarks()

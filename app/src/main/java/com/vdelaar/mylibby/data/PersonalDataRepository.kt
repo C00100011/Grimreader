@@ -5,6 +5,8 @@ import com.vdelaar.mylibby.core.database.AnnotationEntity
 import com.vdelaar.mylibby.core.database.AppDatabase
 import com.vdelaar.mylibby.core.database.BookmarkEntity
 import com.vdelaar.mylibby.core.database.FavouriteEntity
+import com.vdelaar.mylibby.core.database.ShelfBookEntity
+import com.vdelaar.mylibby.core.database.ShelfEntity
 import com.vdelaar.mylibby.core.database.OutboxEntity
 import com.vdelaar.mylibby.core.database.OutboxType
 import com.vdelaar.mylibby.core.database.PendingAction
@@ -33,6 +35,8 @@ data class PersonalExport(
     val progress: List<ExportProgress> = emptyList(),
     val annotations: List<ExportAnnotation> = emptyList(),
     val bookmarks: List<ExportBookmark> = emptyList(),
+    /** The reader's shelves (not Favourites, which are on the books). Files from older versions have none. */
+    val shelves: List<ExportShelf> = emptyList(),
 ) {
     companion object { const val FORMAT = "grimreader-export" }
 }
@@ -53,6 +57,9 @@ data class ExportBook(
     val favourite: Boolean = false,
     val lastReadTime: String? = null,
 )
+
+/** A shelf and the books on it, by book key. */
+@Serializable data class ExportShelf(val name: String, val bookKeys: List<String> = emptyList())
 
 @Serializable
 data class ExportSession(
@@ -76,6 +83,7 @@ data class ImportPreview(
     val highlights: Int,
     val bookmarks: Int,
     val hasProfile: Boolean,
+    val shelves: Int = 0,
 )
 
 data class ImportResult(
@@ -86,6 +94,7 @@ data class ImportResult(
     val highlightsAdded: Int,
     val bookmarksAdded: Int,
     val queuedForSync: Boolean,
+    val shelvesAdded: Int = 0,
 )
 
 class InvalidExportException(message: String) : Exception(message)
@@ -137,6 +146,9 @@ class PersonalDataRepository(
             progress = db.progress().all().mapNotNull { p -> keyById[p.bookId]?.let { ExportProgress(it, p.cfi, p.href, p.percent, p.updatedAt) } },
             annotations = db.annotations().all().mapNotNull { a -> keyById[a.bookId]?.let { ExportAnnotation(it, a.cfi, a.text, a.color, a.style, a.note, a.chapterTitle, a.createdAt) } },
             bookmarks = db.bookmarks().all().mapNotNull { b -> keyById[b.bookId]?.let { ExportBookmark(it, b.cfi, b.title, b.percent, b.createdAt) } },
+            shelves = db.shelves().all().filter { !it.shared && it.pending != PendingAction.DELETE }.sortedBy { it.name.lowercase() }.map { shelf ->
+                ExportShelf(shelf.name, db.shelves().members(shelf.localId).filter { it.pending != PendingAction.DELETE }.sortedByDescending { it.addedAt }.mapNotNull { keyById[it.bookId] })
+            },
         )
         json.encodeToString(PersonalExport.serializer(), export)
     }
@@ -151,7 +163,7 @@ class PersonalDataRepository(
         if (data.version > 1) throw InvalidExportException("version")
         return ImportPreview(
             data, data.sessions.size, data.books.size, data.books.count { it.favourite },
-            data.annotations.size, data.bookmarks.size, data.profile != null,
+            data.annotations.size, data.bookmarks.size, data.profile != null, data.shelves.size,
         )
     }
 
@@ -259,7 +271,21 @@ class PersonalDataRepository(
             bookmarks++
         }
 
-        if (queue) sync.requestSync()
-        ImportResult(sessionsAdded, matched, missing, favourites, highlights, bookmarks, queue)
+        // Shelves: a shelf of the same name is topped up, otherwise it is made. They go to Grimmory with the next sync when one is connected.
+        var shelvesAdded = 0
+        for (exported in data.shelves) {
+            val name = cleanShelfName(exported.name)
+            if (checkShelfName(name, emptyList()).let { it == ShelfNameError.BLANK || it == ShelfNameError.TOO_LONG || it == ShelfNameError.RESERVED }) continue
+            val existing = db.shelves().all().firstOrNull { !it.shared && it.pending != PendingAction.DELETE && it.name.equals(name, ignoreCase = true) }
+            val shelfId = existing?.localId ?: db.shelves().insert(ShelfEntity(name = name, icon = ShelfRepository.DEFAULT_ICON, iconType = ShelfRepository.DEFAULT_ICON_TYPE)).also { shelvesAdded++ }
+            val have = db.shelves().members(shelfId).map { it.bookId }.toSet()
+            val now = System.currentTimeMillis()
+            val rows = exported.bookKeys.mapNotNull { byKey[it]?.id }.distinct().filter { it !in have }
+                .mapIndexed { i, id -> ShelfBookEntity(shelfId, id, now - i, if (id > 0) PendingAction.CREATE else PendingAction.NONE) }
+            if (rows.isNotEmpty()) db.shelves().upsertMembers(rows)
+        }
+
+        if (queue || (shelvesAdded > 0 && !settings.app.value.noServer)) sync.requestSync()
+        ImportResult(sessionsAdded, matched, missing, favourites, highlights, bookmarks, queue, shelvesAdded)
     }
 }

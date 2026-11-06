@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -98,6 +99,7 @@ fun PersonalDataGroup(onMessage: (String) -> Unit) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(stringResource(R.string.import_counts, p.sessions, p.books, p.favourites, p.highlights, p.bookmarks))
+                    if (p.shelves > 0) Text(stringResource(R.string.import_shelves_found, pluralStringResource(R.plurals.shelves_count, p.shelves, p.shelves)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (!app.noServer) {
                         Text(stringResource(R.string.import_sync_q), style = MaterialTheme.typography.titleSmall)
                         Text(stringResource(R.string.import_sync_body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -118,6 +120,7 @@ fun PersonalDataGroup(onMessage: (String) -> Unit) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(stringResource(R.string.import_done_body, r.sessionsAdded, r.favouritesAdded, r.highlightsAdded, r.bookmarksAdded))
+                    if (r.shelvesAdded > 0) Text(stringResource(R.string.import_done_shelves, pluralStringResource(R.plurals.shelves_count, r.shelvesAdded, r.shelvesAdded)))
                     if (r.booksNotFound > 0) Text(stringResource(R.string.import_not_found, r.booksNotFound), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (r.queuedForSync) Text(stringResource(R.string.import_queued), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
