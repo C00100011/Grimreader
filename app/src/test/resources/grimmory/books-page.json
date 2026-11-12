@@ -1,0 +1,119 @@
+{
+    "content": [
+        {
+            "addedOn": "2026-10-15T10:36:23Z",
+            "epubProgress": {
+                "cfi": "epubcfi(/6/2!/4/2)",
+                "href": "c1.xhtml",
+                "contentSourceProgressPercent": null,
+                "percentage": 42.5,
+                "ttsPositionCfi": null
+            },
+            "id": 5,
+            "isPhysical": false,
+            "lastReadTime": "2026-10-15T10:37:17Z",
+            "libraryId": 1,
+            "libraryName": "Main",
+            "metadata": {
+                "bookId": 5,
+                "title": "Alpha Rising",
+                "seriesName": "Alpha Saga",
+                "seriesNumber": 1.0,
+                "language": "en",
+                "authors": [
+                    "Ann Author"
+                ],
+                "allMetadataLocked": false
+            },
+            "metadataMatchScore": 27.957,
+            "personalRating": 8,
+            "primaryFile": {
+                "addedOn": "2026-10-15T10:36:23Z",
+                "book": true,
+                "bookId": 5,
+                "bookType": "EPUB",
+                "extension": "epub",
+                "fileName": "Alpha Rising.epub",
+                "filePath": "/books/Alpha Rising.epub",
+                "fileSizeKb": 1,
+                "fileSubPath": "",
+                "folderBased": false,
+                "id": 5
+            },
+            "readStatus": "READING",
+            "shelves": [
+                {
+                    "id": 1,
+                    "name": "Favorites",
+                    "icon": "heart",
+                    "iconType": "LUCIDE",
+                    "userId": 1,
+                    "publicShelf": false,
+                    "bookCount": 1
+                }
+            ]
+        },
+        {
+            "addedOn": "2026-10-15T10:36:24Z",
+            "id": 8,
+            "isPhysical": false,
+            "libraryId": 1,
+            "libraryName": "Main",
+            "metadata": {
+                "bookId": 8,
+                "title": "Alpha Falling",
+                "seriesName": "Alpha Saga",
+                "seriesNumber": 2.0,
+                "language": "en",
+                "authors": [
+                    "Ann Author"
+                ],
+                "allMetadataLocked": false
+            },
+            "metadataMatchScore": 27.957,
+            "primaryFile": {
+                "addedOn": "2026-10-15T10:36:24Z",
+                "book": true,
+                "bookId": 8,
+                "bookType": "EPUB",
+                "extension": "epub",
+                "fileName": "Alpha Falling.epub",
+                "filePath": "/books/Alpha Falling.epub",
+                "fileSizeKb": 1,
+                "fileSubPath": "",
+                "folderBased": false,
+                "id": 8
+            },
+            "shelves": []
+        }
+    ],
+    "page": {
+        "number": 0,
+        "size": 2,
+        "totalElements": 3,
+        "totalPages": 2,
+        "cursor": "eyJvIjowLCJsIjoyLCJzIjoic2VyaWVzTnVtYmVyIiwiZiI6ImJmY2VhOTg5MDc3MSIsInIiOjJ9"
+    },
+    "links": [
+        {
+            "rel": "facet",
+            "href": "/api/v1/books/facets?facet=series%3AAlpha+Saga",
+            "type": "application/json"
+        },
+        {
+            "rel": "self",
+            "href": "/api/v1/books/page?facet=series%3AAlpha+Saga&cursor=eyJvIjowLCJsIjoyLCJzIjoic2VyaWVzTnVtYmVyIiwiZiI6ImJmY2VhOTg5MDc3MSIsInIiOjJ9",
+            "type": "application/json"
+        },
+        {
+            "rel": "first",
+            "href": "/api/v1/books/page?facet=series%3AAlpha+Saga&cursor=eyJvIjowLCJsIjoyLCJzIjoic2VyaWVzTnVtYmVyIiwiZiI6ImJmY2VhOTg5MDc3MSIsInIiOjJ9",
+            "type": "application/json"
+        },
+        {
+            "rel": "next",
+            "href": "/api/v1/books/page?facet=series%3AAlpha+Saga&cursor=eyJvIjoyLCJsIjoyLCJzIjoic2VyaWVzTnVtYmVyIiwiZiI6ImJmY2VhOTg5MDc3MSIsInIiOjJ9",
+            "type": "application/json"
+        }
+    ]
+}

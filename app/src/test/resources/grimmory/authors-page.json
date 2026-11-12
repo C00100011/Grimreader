@@ -1,0 +1,45 @@
+{
+    "content": [
+        {
+            "id": 2,
+            "name": "Ann Author",
+            "bookCount": 4,
+            "hasPhoto": false
+        },
+        {
+            "id": 4,
+            "name": "Bob Writer",
+            "bookCount": 1,
+            "hasPhoto": false
+        }
+    ],
+    "page": {
+        "number": 0,
+        "size": 2,
+        "totalElements": 4,
+        "totalPages": 2,
+        "cursor": "eyJvIjowLCJsIjoyLCJzIjoibmFtZSIsImYiOiJhZWQ1NzliM2ExOTUiLCJyIjoxODl9"
+    },
+    "links": [
+        {
+            "rel": "facet",
+            "href": "/api/v1/authors/facets",
+            "type": "application/json"
+        },
+        {
+            "rel": "self",
+            "href": "/api/v1/authors/page?cursor=eyJvIjowLCJsIjoyLCJzIjoibmFtZSIsImYiOiJhZWQ1NzliM2ExOTUiLCJyIjoxODl9",
+            "type": "application/json"
+        },
+        {
+            "rel": "first",
+            "href": "/api/v1/authors/page?cursor=eyJvIjowLCJsIjoyLCJzIjoibmFtZSIsImYiOiJhZWQ1NzliM2ExOTUiLCJyIjoxODl9",
+            "type": "application/json"
+        },
+        {
+            "rel": "next",
+            "href": "/api/v1/authors/page?cursor=eyJvIjoyLCJsIjoyLCJzIjoibmFtZSIsImYiOiJhZWQ1NzliM2ExOTUiLCJyIjoxODl9",
+            "type": "application/json"
+        }
+    ]
+}

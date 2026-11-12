@@ -39,7 +39,54 @@ interface GrimmoryApi {
         @Field("state") state: String,
     ): AccessTokenDto
 
-    // Mobile app catalog
+    // Browse: the regular API that replaces the /api/v1/app routes (removed in Grimmory 4.0). Use [GrimmoryCatalog], which
+    // calls these and only falls back to the legacy routes below on servers that do not have them.
+    @GET("api/v1/books/page")
+    suspend fun booksPage(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 30,
+        @Query("sort") sort: String? = null,
+        @Query("facet") facet: List<String>? = null,
+        @Query("facet_logic") facetLogic: String? = null,
+        @Query("query") query: String? = null,
+    ): BrowsePageDto<BookDto>
+
+    @GET("api/v1/books/facets")
+    suspend fun booksFacets(
+        @Query("facet") facet: List<String>? = null,
+        @Query("facet_logic") facetLogic: String? = null,
+        @Query("query") query: String? = null,
+    ): FacetGroupsDto
+
+    /** One facet, paged and searchable. Newer servers only; others answer 400/404 or a web page. */
+    @GET("api/v1/books/facets/{name}")
+    suspend fun bookFacet(
+        @Path("name") name: String,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 100,
+        @Query("search") search: String? = null,
+        @Query("facet") facet: List<String>? = null,
+        @Query("facet_logic") facetLogic: String? = null,
+    ): FacetGroupsDto
+
+    @GET("api/v1/books/{id}")
+    suspend fun bookById(@Path("id") id: Long, @Query("withDescription") withDescription: Boolean = true): BookDto
+
+    @POST("api/v1/books/progress")
+    suspend fun postProgress(@Body body: ReadProgressRequest): Response<Unit>
+
+    @POST("api/v1/books/status")
+    suspend fun postStatus(@Body body: ReadStatusRequest): Response<ResponseBody>
+
+    @GET("api/v1/authors/page")
+    suspend fun authorsPage(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 60,
+        @Query("sort") sort: String? = null,
+        @Query("query") query: String? = null,
+    ): BrowsePageDto<AuthorSummaryDto>
+
+    // Legacy mobile app catalog (/api/v1/app): gone in Grimmory 4.0, kept for older servers only.
     @GET("api/v1/app/books")
     suspend fun books(
         @Query("page") page: Int = 0,
@@ -101,9 +148,6 @@ interface GrimmoryApi {
         @Query("size") size: Int = 60,
         @Query("search") search: String? = null,
     ): PageResponse<AuthorSummaryDto>
-
-    @GET("api/v1/app/shelves")
-    suspend fun appShelves(): List<ShelfSummaryDto>
 
     // Shelves (favourites live on a regular shelf)
     @GET("api/v1/shelves")

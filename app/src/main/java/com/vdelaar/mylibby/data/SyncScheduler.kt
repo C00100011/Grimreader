@@ -16,7 +16,6 @@ import com.vdelaar.mylibby.MyLibbyApp
 import com.vdelaar.mylibby.core.database.OutboxType
 import com.vdelaar.mylibby.core.network.PersonalRatingRequest
 import com.vdelaar.mylibby.core.network.ShelvesAssignmentRequest
-import com.vdelaar.mylibby.core.network.UpdateStatusRequest
 import java.util.concurrent.TimeUnit
 
 class SyncScheduler(private val context: Context) {
@@ -67,6 +66,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 suspend fun pushPendingChanges(c: com.vdelaar.mylibby.di.AppContainer): Boolean {
     var failed = false
     val api = runCatching { c.api.grimmory() }.getOrNull() ?: return true
+    val catalog = c.api.catalog()
 
     // Outbox: favourites and read status
     for (item in c.db.outbox().all()) {
@@ -85,7 +85,7 @@ suspend fun pushPendingChanges(c: com.vdelaar.mylibby.di.AppContainer): Boolean 
                     if (!r.isSuccessful && r.code() != 404) error("HTTP ${r.code()}")
                 }
                 OutboxType.STATUS -> {
-                    val r = api.updateStatus(item.bookId, UpdateStatusRequest(item.payload ?: "READING"))
+                    val r = catalog.updateStatus(item.bookId, item.payload ?: "READING")
                     if (!r.isSuccessful && r.code() != 404) error("HTTP ${r.code()}")
                 }
                 OutboxType.RATING -> {

@@ -143,6 +143,16 @@ class ApiProvider(
 
     fun grimmory(): GrimmoryApi = grimmoryFor(grimmoryBaseUrl)
 
+    private val catalogCache = ConcurrentHashMap<String, GrimmoryCatalog>()
+
+    /** Books, series and authors of the configured Grimmory (see [GrimmoryCatalog]). */
+    fun catalog(): GrimmoryCatalog = catalogFor(grimmoryBaseUrl)
+
+    fun catalogFor(baseUrl: String): GrimmoryCatalog {
+        val api = grimmoryFor(baseUrl)
+        return catalogCache.getOrPut(normalize(baseUrl)) { GrimmoryCatalog(api) }
+    }
+
     fun grimmoryFor(baseUrl: String): GrimmoryApi {
         val url = normalize(baseUrl)
         require(url.toHttpUrlOrNull() != null) { com.vdelaar.mylibby.core.str(com.vdelaar.mylibby.R.string.err_invalid_address) }
