@@ -62,6 +62,7 @@ class LocalBooksRepository(private val context: Context, private val db: AppData
             b.coverPath?.let { File(it).delete() }
         }
         db.localBooks().delete(id)
+        db.shelves().deleteBook(id) // and off its shelves
     }
 
     suspend fun saveProgress(id: Long, percent: Float) = withContext(Dispatchers.IO) {

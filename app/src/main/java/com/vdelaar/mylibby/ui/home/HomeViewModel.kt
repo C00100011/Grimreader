@@ -78,7 +78,7 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
         lastLoad = System.currentTimeMillis()
         viewModelScope.launch {
             _state.update { it.copy(refreshing = refresh, loading = !refresh && it.continueReading.isEmpty()) }
-            if (refresh) launch { c.library.refreshFavourites() }
+            if (refresh) launch { c.library.refreshFavourites(); c.shelves.pull() }
             runCatching { c.library.home() }
                 .onSuccess { h -> _state.update { it.copy(loading = false, refreshing = false, offline = h.offline, continueReading = h.continueReading, recentlyAdded = h.recentlyAdded, error = null) } }
                 .onFailure { e -> _state.update { it.copy(loading = false, refreshing = false, error = e.message) } }

@@ -492,6 +492,7 @@
     <string name="tab_lib_authors">Auteurs</string>
     <string name="tab_lib_books">Boeken</string>
     <string name="tab_lib_series">Series</string>
+    <string name="tab_lib_shelves">Planken</string>
     <string name="tab_profile">Profiel</string>
     <string name="tap_edges">Tik op de randen om te bladeren</string>
     <string name="text_size">Tekstgrootte</string>
@@ -708,7 +709,7 @@
     <string name="home_local_body">Importeer een EPUB van dit apparaat: tik op het bestandsicoon bij Bibliotheek, of open een boekbestand met Grimreader.</string>
     <string name="my_data">Mijn gegevens</string>
     <string name="export_data">Mijn gegevens exporteren</string>
-    <string name="export_data_body">Bewaar je leesstatistieken, leeslijst, favorieten, markeringen en bladwijzers in een bestand.</string>
+    <string name="export_data_body">Bewaar je leesstatistieken, leeslijst, favorieten, planken, markeringen en bladwijzers in een bestand.</string>
     <string name="import_data">Gegevens importeren</string>
     <string name="import_data_body">Voeg gegevens uit een exportbestand toe. Er wordt niets op dit apparaat overschreven.</string>
     <string name="export_done">Export opgeslagen</string>
@@ -718,7 +719,7 @@
     <string name="import_title">Gegevens importeren</string>
     <string name="import_counts">%1$d leessessies · %2$d boeken · %3$d favorieten · %4$d markeringen · %5$d bladwijzers</string>
     <string name="import_sync_q">Ook synchroniseren met Grimmory?</string>
-    <string name="import_sync_body">Synchroniseren stuurt de geïmporteerde favorieten, leesstatus, beoordelingen, voortgang, markeringen en bladwijzers naar je Grimmory-account. Houd je het alleen op dit apparaat, dan kunnen favorieten en leesstatus van Grimmory-boeken bij de volgende synchronisatie weer door de server worden vervangen.</string>
+    <string name="import_sync_body">Synchroniseren stuurt de geïmporteerde favorieten, planken, leesstatus, beoordelingen, voortgang, markeringen en bladwijzers naar je Grimmory-account. Houd je het alleen op dit apparaat, dan kunnen favorieten en leesstatus van Grimmory-boeken bij de volgende synchronisatie weer door de server worden vervangen.</string>
     <string name="import_sync_yes">Importeren en synchroniseren met Grimmory</string>
     <string name="import_sync_no">Alleen naar dit apparaat importeren</string>
     <string name="import_apply">Importeren</string>
@@ -1167,4 +1168,53 @@
     <string name="idle_multiplier_value">%1$.1f×</string>
     <string name="idle_prompt">Vraag “Ben je nog aan het lezen?”</string>
     <string name="idle_prompt_body">Uit pauzeert stilletjes; de volgende paginawissel of tik gaat weer verder.</string>
+    <!-- Shelves -->
+    <string name="shelf_new">Nieuwe plank</string>
+    <string name="shelf_name_label">Naam van de plank</string>
+    <string name="shelf_create">Maken</string>
+    <string name="shelf_rename">Plank hernoemen</string>
+    <string name="shelf_rename_action">Hernoemen</string>
+    <string name="shelf_delete">Plank verwijderen</string>
+    <string name="shelf_delete_q">Deze plank verwijderen?</string>
+    <string name="shelf_delete_body">“%1$s” wordt verwijderd. De boeken blijven in je bibliotheek.</string>
+    <string name="shelf_delete_body_synced">“%1$s” wordt hier en in Grimmory verwijderd. De boeken blijven in je bibliotheek.</string>
+    <string name="shelf_error_blank">Geef de plank een naam</string>
+    <string name="shelf_error_long">Gebruik maximaal %1$d tekens</string>
+    <string name="shelf_error_reserved">Favorieten is een plank op zich</string>
+    <string name="shelf_error_duplicate">Je hebt al een plank met deze naam</string>
+    <string name="shelves_empty_title">Maak je eerste plank</string>
+    <string name="shelves_empty_body">Groepeer boeken op je eigen manier, zoals “Zomerboeken” of “Nederlandse klassiekers”. Open een boek en tik op Planken, of selecteer boeken in je bibliotheek en tik op Op plank zetten.</string>
+    <string name="shelf_empty_title">Nog niets op deze plank</string>
+    <string name="shelf_empty_body">Open een boek en tik op Planken, of selecteer boeken in je bibliotheek en kies Op plank zetten.</string>
+    <string name="shelf_empty_favorites_body">Tik op het hartje bij een boek om het hier te zetten.</string>
+    <string name="shelf_shared">Gedeelde plank · alleen lezen</string>
+    <string name="shelf_synced">Ook in Grimmory</string>
+    <string name="shelves_none_found">Geen planken gevonden</string>
+    <string name="shelf_options">Plankopties</string>
+    <string name="shelf_pick">Kies een plank</string>
+    <string name="shelf_pick_body">De boeken ervan staan hier.</string>
+    <string name="shelves_action">Planken</string>
+    <string name="shelves_sheet_title">Op planken zetten</string>
+    <string name="shelves_new_row">Nieuwe plank…</string>
+    <string name="add_to_shelf">Op plank zetten</string>
+    <string name="remove_from_shelf">Van plank halen</string>
+    <string name="sort_shelf_added">Toegevoegd aan plank</string>
+    <string name="sort_author_az">Auteur A–Z</string>
+    <string name="shelf_created">Plank “%1$s” gemaakt</string>
+    <string name="shelf_renamed">Hernoemd naar “%1$s”</string>
+    <string name="shelf_deleted">“%1$s” verwijderd</string>
+    <string name="import_shelves_found">Planken in het bestand: %1$s</string>
+    <string name="import_done_shelves">%1$s toegevoegd.</string>
+    <plurals name="added_to_shelf_n">
+        <item quantity="one">%1$d boek op “%2$s” gezet</item>
+        <item quantity="other">%1$d boeken op “%2$s” gezet</item>
+    </plurals>
+    <plurals name="removed_from_shelf_n">
+        <item quantity="one">%1$d boek van “%2$s” gehaald</item>
+        <item quantity="other">%1$d boeken van “%2$s” gehaald</item>
+    </plurals>
+    <plurals name="shelves_count">
+        <item quantity="one">%1$d plank</item>
+        <item quantity="other">%1$d planken</item>
+    </plurals>
 </resources>

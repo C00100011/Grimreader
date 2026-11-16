@@ -21,8 +21,10 @@ import androidx.room.RoomDatabase
         SwipeCardEntity::class,
         WantedEntity::class,
         BookChunkEntity::class,
+        ShelfEntity::class,
+        ShelfBookEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -40,6 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun swipe(): SwipeDao
     abstract fun wanted(): WantedDao
     abstract fun bookChunks(): BookChunkDao
+    abstract fun shelves(): ShelfDao
 
     companion object {
         /** v2: books imported from the device. Keeps all existing data. */
@@ -93,9 +96,25 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v7: shelves the reader made, and the books on them. Keeps all existing data. */
+        val MIGRATION_6_7 = object : androidx.room.migration.Migration(6, 7) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `shelves` (`localId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `remoteId` INTEGER, `name` TEXT NOT NULL, `icon` TEXT, " +
+                        "`iconType` TEXT, `publicShelf` INTEGER NOT NULL, `shared` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `pending` TEXT NOT NULL)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_shelves_remoteId` ON `shelves` (`remoteId`)")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `shelf_books` (`shelfId` INTEGER NOT NULL, `bookId` INTEGER NOT NULL, `addedAt` INTEGER NOT NULL, `pending` TEXT NOT NULL, " +
+                        "PRIMARY KEY(`shelfId`, `bookId`), FOREIGN KEY(`shelfId`) REFERENCES `shelves`(`localId`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_shelf_books_bookId` ON `shelf_books` (`bookId`)")
+            }
+        }
+
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "mylibby.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
                 .build()
     }

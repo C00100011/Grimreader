@@ -23,7 +23,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class LibraryTab(@androidx.annotation.StringRes val label: Int) { BOOKS(R.string.tab_lib_books), SERIES(R.string.tab_lib_series), AUTHORS(R.string.tab_lib_authors) }
+enum class LibraryTab(@androidx.annotation.StringRes val label: Int) {
+    BOOKS(R.string.tab_lib_books), SERIES(R.string.tab_lib_series), AUTHORS(R.string.tab_lib_authors), SHELVES(R.string.tab_lib_shelves)
+}
 
 data class LibraryUiState(
     val tab: LibraryTab = LibraryTab.BOOKS,
@@ -49,6 +51,8 @@ data class LibraryUiState(
     val authorsFor: String? = null,
     val grid: Boolean = true,
     val selectedBookId: Long? = null,
+    /** Shelves tab, list and books side by side: the shelf whose books are shown (null = Favourites). */
+    val selectedShelfId: Long? = null,
     /** Books picked in multi-select mode (empty = not selecting). */
     val multiSelect: Set<Long> = emptySet(),
     val selecting: Boolean = false,
@@ -89,7 +93,7 @@ class LibraryViewModel(private val c: AppContainer) : ViewModel() {
         when (tab) {
             LibraryTab.SERIES -> if (_state.value.seriesFor != search) loadSeries()
             LibraryTab.AUTHORS -> if (_state.value.authorsFor != search) loadAuthors()
-            LibraryTab.BOOKS -> Unit
+            LibraryTab.BOOKS, LibraryTab.SHELVES -> Unit
         }
     }
 
@@ -102,6 +106,7 @@ class LibraryViewModel(private val c: AppContainer) : ViewModel() {
                 LibraryTab.BOOKS -> reload()
                 LibraryTab.SERIES -> loadSeries()
                 LibraryTab.AUTHORS -> loadAuthors()
+                LibraryTab.SHELVES -> Unit // the shelves are narrowed by name on screen
             }
         }
     }
@@ -122,6 +127,10 @@ class LibraryViewModel(private val c: AppContainer) : ViewModel() {
 
     fun select(id: Long?) = _state.update { it.copy(selectedBookId = id) }
 
+    fun selectShelf(id: Long?) = _state.update { it.copy(selectedShelfId = id) }
+
+    fun showMessage(text: String) = _state.update { it.copy(message = text) }
+
     // Multi-select ---------------------------------------------------------------------------
 
     fun toggleSelect(id: Long) = _state.update {
@@ -137,7 +146,7 @@ class LibraryViewModel(private val c: AppContainer) : ViewModel() {
     fun consumeMessage() = _state.update { it.copy(message = null) }
 
     fun favouriteSelected(favourite: Boolean) {
-        val ids = _state.value.multiSelect.filter { it > 0 }.toSet() // local books aren't in Grimmory
+        val ids = _state.value.multiSelect
         viewModelScope.launch {
             c.library.setFavourites(ids, favourite)
             _state.update {
@@ -194,12 +203,14 @@ class LibraryViewModel(private val c: AppContainer) : ViewModel() {
                 if (!c.settings.app.value.noServer && c.tokens.accessToken != null) {
                     runCatching { com.vdelaar.mylibby.data.pushPendingChanges(c) }
                     runCatching { c.library.refreshFavourites() }
+                    runCatching { c.shelves.pull() }
                     c.librarySync.launchFull(forced = false) // book list and covers carry on in the background
                 }
                 when (_state.value.tab) {
                     LibraryTab.BOOKS -> { loadJob?.cancel(); loadBooks() }
                     LibraryTab.SERIES -> { seriesJob?.cancel(); fetchSeries() }
                     LibraryTab.AUTHORS -> { authorsJob?.cancel(); fetchAuthors() }
+                    LibraryTab.SHELVES -> Unit // already read from the server above
                 }
             } finally {
                 _state.update { it.copy(refreshing = false) }

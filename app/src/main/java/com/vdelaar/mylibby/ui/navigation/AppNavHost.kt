@@ -62,6 +62,7 @@ class AppNavigator(private val nav: NavHostController) {
     fun read(id: Long) = nav.navigate(ReaderRoute(id)) { launchSingleTop = true }
     fun series(name: String) = nav.navigate(CollectionRoute("series", name))
     fun author(name: String) = nav.navigate(CollectionRoute("author", name))
+    fun shelf(id: Long) = nav.navigate(ShelfRoute(id)) { launchSingleTop = true }
     fun settings() = nav.navigate(SettingsRoute()) { launchSingleTop = true }
     fun integrations() = nav.navigate(SettingsRoute("INTEGRATIONS")) { launchSingleTop = true }
     /** Settings opened straight on a page ([page] = a SettingsPage name, e.g. "READING"). */
@@ -128,6 +129,7 @@ fun AppNavHost() {
             val r = entry.toRoute<CollectionRoute>()
             CollectionScreen(r.kind, r.name, navigator)
         }
+        composable<ShelfRoute> { entry -> com.vdelaar.mylibby.ui.shelves.ShelfScreen(entry.toRoute<ShelfRoute>().id, navigator) }
         composable<SettingsRoute> { entry -> SettingsScreen(navigator, entry.toRoute<SettingsRoute>().page) }
         composable<SuggestionsRoute> { SuggestionsScreen(navigator) }
         composable<LibrariesRoute> { LibrariesScreen(navigator) }

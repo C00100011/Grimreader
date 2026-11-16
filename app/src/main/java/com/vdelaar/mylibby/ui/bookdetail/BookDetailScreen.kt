@@ -34,6 +34,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.DownloadDone
+import androidx.compose.material.icons.rounded.Bookmarks
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.MoreVert
@@ -96,6 +97,8 @@ import com.vdelaar.mylibby.ui.components.ErrorState
 import com.vdelaar.mylibby.ui.components.StarRating
 import com.vdelaar.mylibby.ui.components.coverUrl
 import com.vdelaar.mylibby.ui.navigation.AppNavigator
+import com.vdelaar.mylibby.ui.shelves.AddToShelvesSheet
+import com.vdelaar.mylibby.ui.shelves.ShelfChips
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -116,6 +119,7 @@ fun BookDetailContent(bookId: Long, navigator: AppNavigator, onBack: (() -> Unit
     val sessions by vm.sessions.collectAsStateWithLifecycle()
     val appForPace by com.vdelaar.mylibby.ui.appContainer().settings.app.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    var showShelves by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val c = appContainer()
     val scope = rememberCoroutineScope()
@@ -160,6 +164,7 @@ fun BookDetailContent(bookId: Long, navigator: AppNavigator, onBack: (() -> Unit
                             book = book,
                             isFav = isFav,
                             onFav = vm::toggleFavourite,
+                            onShelves = { showShelves = true },
                             onRead = { navigator.read(book.id) },
                             onShare = { book.localPath?.let { ShareHelper.shareFile(context, book, File(it)) } },
                             onDelete = { vm.deleteLocal { onBack?.invoke() ?: navigator.back() } },
@@ -170,6 +175,7 @@ fun BookDetailContent(bookId: Long, navigator: AppNavigator, onBack: (() -> Unit
                         download = download,
                         onRead = { navigator.read(book.id) },
                         onFav = vm::toggleFavourite,
+                        onShelves = { showShelves = true },
                         onDownload = vm::download,
                         onRemoveDownload = vm::removeDownload,
                         onShare = { scope.launch { ShareHelper.shareBook(context, c, book) } },
@@ -195,6 +201,7 @@ fun BookDetailContent(bookId: Long, navigator: AppNavigator, onBack: (() -> Unit
                         Spacer(Modifier.height(12.dp))
                         RatingRow(book.rating, vm::setRating)
                     }
+                    ShelfChips(book.id, navigator, onAdd = { showShelves = true })
                     book.description?.takeIf { it.isNotBlank() }?.let {
                         Spacer(Modifier.height(16.dp))
                         Description(it)
@@ -243,6 +250,7 @@ fun BookDetailContent(bookId: Long, navigator: AppNavigator, onBack: (() -> Unit
             }
         }
     }
+    if (showShelves) AddToShelvesSheet(setOf(bookId), onDismiss = { showShelves = false }, onMessage = { scope.launch { snackbar.showSnackbar(it) } })
 }
 
 @Composable
@@ -283,6 +291,7 @@ private fun PrimaryActions(
     download: DownloadEntity?,
     onRead: () -> Unit,
     onFav: () -> Unit,
+    onShelves: () -> Unit,
     onDownload: () -> Unit,
     onRemoveDownload: () -> Unit,
     onShare: () -> Unit,
@@ -309,6 +318,7 @@ private fun PrimaryActions(
     Spacer(Modifier.height(12.dp))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
         ActionButton(if (isFav) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, stringResource(R.string.favorite), tint = if (isFav) Color(0xFFE5484D) else null, onClick = onFav)
+        ActionButton(Icons.Rounded.Bookmarks, stringResource(R.string.shelves_action), onClick = onShelves)
         when (download?.state) {
             DownloadState.DONE -> {
                 var confirm by remember { mutableStateOf(false) }
@@ -323,7 +333,7 @@ private fun PrimaryActions(
                     )
                 }
             }
-            DownloadState.DOWNLOADING, DownloadState.QUEUED -> Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(76.dp)) {
+            DownloadState.DOWNLOADING, DownloadState.QUEUED -> Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                 Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(progress = { download.progress }, modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
                 }
@@ -334,8 +344,8 @@ private fun PrimaryActions(
         ActionButton(Icons.Rounded.Share, stringResource(R.string.share), onClick = onShare)
         if (onShareFile != null) {
             var menu by remember { mutableStateOf(false) }
-            Box {
-                ActionButton(Icons.Rounded.MoreVert, stringResource(R.string.more), onClick = { menu = true })
+            Box(Modifier.weight(1f)) {
+                ActionButtonContent(Icons.Rounded.MoreVert, stringResource(R.string.more), Modifier.fillMaxWidth(), onClick = { menu = true })
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.send_book_file)) }, onClick = { menu = false; onShareFile() })
                     DropdownMenuItem(text = { Text(stringResource(R.string.remove_from_device)) }, onClick = { menu = false; onRemoveDownload() })
@@ -346,7 +356,7 @@ private fun PrimaryActions(
 }
 
 @Composable
-private fun LocalBookActions(book: Book, isFav: Boolean, onFav: () -> Unit, onRead: () -> Unit, onShare: () -> Unit, onDelete: () -> Unit) {
+private fun LocalBookActions(book: Book, isFav: Boolean, onFav: () -> Unit, onShelves: () -> Unit, onRead: () -> Unit, onShare: () -> Unit, onDelete: () -> Unit) {
     var confirm by remember { mutableStateOf(false) }
     Button(onClick = onRead, enabled = book.isReadable, modifier = Modifier.fillMaxWidth().height(52.dp)) {
         Icon(Icons.AutoMirrored.Rounded.MenuBook, null)
@@ -363,6 +373,7 @@ private fun LocalBookActions(book: Book, isFav: Boolean, onFav: () -> Unit, onRe
     Spacer(Modifier.height(12.dp))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
         ActionButton(if (isFav) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, stringResource(R.string.favorite), tint = if (isFav) Color(0xFFE5484D) else null, onClick = onFav)
+        ActionButton(Icons.Rounded.Bookmarks, stringResource(R.string.shelves_action), onClick = onShelves)
         ActionButton(Icons.Rounded.Share, stringResource(R.string.share), onClick = onShare)
         ActionButton(Icons.Rounded.Delete, stringResource(R.string.delete), onClick = { confirm = true })
     }
@@ -385,14 +396,20 @@ private fun LocalBookActions(book: Book, isFav: Boolean, onFav: () -> Unit, onRe
     }
 }
 
+/** One of the round buttons under the cover. The buttons share the row, so five still fit on a narrow phone. */
 @Composable
-private fun ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, tint: Color? = null, enabled: Boolean = true, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(76.dp)) {
+private fun androidx.compose.foundation.layout.RowScope.ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, tint: Color? = null, enabled: Boolean = true, onClick: () -> Unit) =
+    ActionButtonContent(icon, label, Modifier.weight(1f), tint, enabled, onClick)
+
+@Composable
+private fun ActionButtonContent(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, modifier: Modifier, tint: Color? = null, enabled: Boolean = true, onClick: () -> Unit) {
+    // A long label may take a second line.
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         FilledTonalIconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(48.dp)) {
             Icon(icon, label, tint = tint ?: androidx.compose.material3.LocalContentColor.current)
         }
         Spacer(Modifier.height(4.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 2, textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis)
     }
 }
 

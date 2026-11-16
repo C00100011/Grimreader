@@ -28,10 +28,18 @@ class AppContainer(context: Context) {
     val sync = SyncScheduler(context)
     val auth = AuthRepository(api, tokens, settings, db)
     val library = LibraryRepository(api, db, settings, sync)
+    /** The reader's own shelves: on the device, and kept in step with Grimmory's when connected. */
+    val shelves = com.vdelaar.mylibby.data.ShelfRepository(
+        db, com.vdelaar.mylibby.data.GrimmoryShelfRemote(api), appScope,
+        connected = { !settings.app.value.noServer && tokens.accessToken != null },
+        favouritesShelfId = { settings.app.value.favouritesShelfId },
+        cacheBooks = { library.cache(it) },
+        requestSync = { sync.requestSync() },
+    )
     val reading = ReadingRepository(api, db, sync, settings)
     /** The full Grimmory synchronisation: changes out, book list and covers kept on the device. */
     val librarySync = com.vdelaar.mylibby.data.SyncRepository(
-        context.applicationContext, api, settings, tokens, library, reading, appScope,
+        context.applicationContext, api, settings, tokens, library, shelves, reading, appScope,
         push = { com.vdelaar.mylibby.data.pushPendingChanges(this@AppContainer) },
     )
     val downloads = DownloadRepository(context, api, db, settings)

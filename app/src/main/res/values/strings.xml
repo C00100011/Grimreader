@@ -493,6 +493,7 @@
     <string name="tab_lib_authors">Authors</string>
     <string name="tab_lib_books">Books</string>
     <string name="tab_lib_series">Series</string>
+    <string name="tab_lib_shelves">Shelves</string>
     <string name="tab_profile">Profile</string>
     <string name="tap_edges">Tap edges to turn pages</string>
     <string name="text_size">Text size</string>
@@ -709,7 +710,7 @@
     <string name="home_local_body">Import an EPUB from this device: tap the file icon in Library, or open a book file with Grimreader.</string>
     <string name="my_data">My data</string>
     <string name="export_data">Export my data</string>
-    <string name="export_data_body">Save your reading stats, read list, favourites, highlights and bookmarks to a file.</string>
+    <string name="export_data_body">Save your reading stats, read list, favourites, shelves, highlights and bookmarks to a file.</string>
     <string name="import_data">Import data</string>
     <string name="import_data_body">Add data from an export file. Nothing on this device is overwritten.</string>
     <string name="export_done">Export saved</string>
@@ -719,7 +720,7 @@
     <string name="import_title">Import data</string>
     <string name="import_counts">%1$d reading sessions · %2$d books · %3$d favourites · %4$d highlights · %5$d bookmarks</string>
     <string name="import_sync_q">Also sync this with Grimmory?</string>
-    <string name="import_sync_body">Sync sends the imported favourites, read status, ratings, progress, highlights and bookmarks to your Grimmory account. If you keep it on this device only, favourites and read status of Grimmory books can be replaced by the server again at the next sync.</string>
+    <string name="import_sync_body">Sync sends the imported favourites, shelves, read status, ratings, progress, highlights and bookmarks to your Grimmory account. If you keep it on this device only, favourites and read status of Grimmory books can be replaced by the server again at the next sync.</string>
     <string name="import_sync_yes">Import and sync with Grimmory</string>
     <string name="import_sync_no">Import to this device only</string>
     <string name="import_apply">Import</string>
@@ -1168,4 +1169,53 @@
     <string name="idle_multiplier_value">%1$.1f×</string>
     <string name="idle_prompt">Ask “Are you still reading?”</string>
     <string name="idle_prompt_body">Off pauses silently; the next page turn or tap continues.</string>
+    <!-- Shelves -->
+    <string name="shelf_new">New shelf</string>
+    <string name="shelf_name_label">Shelf name</string>
+    <string name="shelf_create">Create</string>
+    <string name="shelf_rename">Rename shelf</string>
+    <string name="shelf_rename_action">Rename</string>
+    <string name="shelf_delete">Delete shelf</string>
+    <string name="shelf_delete_q">Delete this shelf?</string>
+    <string name="shelf_delete_body">“%1$s” is removed. The books stay in your library.</string>
+    <string name="shelf_delete_body_synced">“%1$s” is removed here and in Grimmory. The books stay in your library.</string>
+    <string name="shelf_error_blank">Give the shelf a name</string>
+    <string name="shelf_error_long">Use at most %1$d characters</string>
+    <string name="shelf_error_reserved">Favorites is a shelf of its own</string>
+    <string name="shelf_error_duplicate">You already have a shelf with this name</string>
+    <string name="shelves_empty_title">Make your first shelf</string>
+    <string name="shelves_empty_body">Group books your own way, like “Summer reads” or “Dutch classics”. Open a book and tap Shelves, or select books in your library and tap Add to shelf.</string>
+    <string name="shelf_empty_title">Nothing on this shelf yet</string>
+    <string name="shelf_empty_body">Open a book and tap Shelves, or select books in your library and choose Add to shelf.</string>
+    <string name="shelf_empty_favorites_body">Tap the heart on a book to put it here.</string>
+    <string name="shelf_shared">Shared shelf · read only</string>
+    <string name="shelf_synced">Also in Grimmory</string>
+    <string name="shelves_none_found">No shelves found</string>
+    <string name="shelf_options">Shelf options</string>
+    <string name="shelf_pick">Pick a shelf</string>
+    <string name="shelf_pick_body">Its books show here.</string>
+    <string name="shelves_action">Shelves</string>
+    <string name="shelves_sheet_title">Add to shelves</string>
+    <string name="shelves_new_row">New shelf…</string>
+    <string name="add_to_shelf">Add to shelf</string>
+    <string name="remove_from_shelf">Remove from shelf</string>
+    <string name="sort_shelf_added">Added to shelf</string>
+    <string name="sort_author_az">Author A–Z</string>
+    <string name="shelf_created">Shelf “%1$s” made</string>
+    <string name="shelf_renamed">Renamed to “%1$s”</string>
+    <string name="shelf_deleted">Deleted “%1$s”</string>
+    <string name="import_shelves_found">Shelves in the file: %1$s</string>
+    <string name="import_done_shelves">Added %1$s.</string>
+    <plurals name="added_to_shelf_n">
+        <item quantity="one">%1$d book added to “%2$s”</item>
+        <item quantity="other">%1$d books added to “%2$s”</item>
+    </plurals>
+    <plurals name="removed_from_shelf_n">
+        <item quantity="one">%1$d book removed from “%2$s”</item>
+        <item quantity="other">%1$d books removed from “%2$s”</item>
+    </plurals>
+    <plurals name="shelves_count">
+        <item quantity="one">%1$d shelf</item>
+        <item quantity="other">%1$d shelves</item>
+    </plurals>
 </resources>

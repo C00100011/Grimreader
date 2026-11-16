@@ -5,7 +5,7 @@
 
 From the Android emulator the host is http://10.0.2.2:<port> (any username and password work).
 It implements only what the app calls: login, the /app/* catalogue (books, authors, series,
-filter options), progress, covers (generated PNGs), the EPUB download (one of the demo books for every id),
+filter options), progress, shelves (create, rename, delete, assign; a public shelf of another user is read-only, names are unique per user, like the real server), covers (generated PNGs), the EPUB download (one of the demo books for every id),
 /api/v1/books/{id}/recommendations, an OPDS catalog at /opds (open) and /opds-private (user "reader", password "secret"),
 a bare-bones Shelfmark (auth off, metadata search, empty releases) on the same address, and a fake Hardcover GraphQL endpoint at /hardcover/graphql
 (use the key  http://10.0.2.2:<port>/hardcover/graphql|mocktoken  in a debug build; any other token is refused with 401).
@@ -47,6 +47,42 @@ kobo = {}  # id -> percent held by a (pretend) Kobo; Grimmory reports it as read
 puts = []  # (book id, percent) of every progress update the app sent, newest last
 
 
+ME = 1  # the signed-in user
+shelves = {}  # id -> shelf as the real server reports it
+shelf_books = {}  # id -> ids of the books on it
+shelf_log = []  # (method, path) of every shelf call, newest last: GET /_debug/shelves
+
+
+def reset_shelves():
+    """Favorites (the app makes it when missing), a shelf made on the web, and a public shelf of somebody else."""
+    shelves.clear()
+    shelf_books.clear()
+    shelf_log.clear()
+    for i, name, user, public, books in (
+        (5, "Staff picks", 2, True, {1, 2, 3}),
+        (6, "From the web", ME, False, {4, 5}),
+        (7, "Favorites", ME, False, set()),
+    ):
+        shelves[i] = {"id": i, "name": name, "icon": "bookmark", "iconType": "LUCIDE", "userId": user, "publicShelf": public}
+        shelf_books[i] = set(books)
+
+
+reset_shelves()
+
+
+def shelf_dto(sh):
+    return dict(sh, bookCount=len(shelf_books.get(sh["id"], ())))
+
+
+def visible_shelves():
+    return [sh for sh in shelves.values() if sh["userId"] == ME or sh["publicShelf"]]
+
+
+def shelf_summaries_of(book_id):
+    return [{"id": sh["id"], "name": sh["name"], "icon": sh["icon"], "bookCount": len(shelf_books[sh["id"]]), "publicShelf": sh["publicShelf"]}
+            for sh in visible_shelves() if book_id in shelf_books[sh["id"]]]
+
+
 def overall(i):
     """What Grimmory calls the book's readProgress: KOReader, then Kobo, then the web reader."""
     return kobo.get(i, progress.get(i))
@@ -71,7 +107,7 @@ def detail(b):
     d = summary(b)
     d.update({
         "subtitle": None, "description": DESCRIPTION, "isbn13": None, "goodreadsRating": 4.1,
-        "goodreadsReviewCount": 1200, "libraryName": "Mock library", "shelves": [],
+        "goodreadsReviewCount": 1200, "libraryName": "Mock library", "shelves": shelf_summaries_of(b[0]),
         "fileTypes": ["EPUB"],
         "files": [{"id": 100 + b[0], "bookId": b[0], "fileName": b[1] + ".epub", "isBook": True,
                    "bookType": "EPUB", "fileSizeKb": 600, "extension": "epub", "isPrimary": True}],
@@ -344,8 +380,31 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, {"accessToken": "mock-access", "refreshToken": "mock-refresh", "expires": 9999999999, "isDefaultPassword": False})
         if path == "/api/v1/shelves":
             req = json.loads(data or b"{}")
-            return self.send(200, {"id": 7, "name": req.get("name", "Shelf"), "bookCount": 0})
-        if path in ("/api/v1/reading-sessions", "/api/v1/books/shelves", "/api/v1/annotations", "/api/v1/bookmarks"):
+            shelf_log.append(("POST", path, req))
+            name = (req.get("name") or "").strip()
+            if not name:
+                return self.send(400, {"message": "Shelf name must not be empty."})
+            if any(sh["userId"] == ME and sh["name"] == name for sh in shelves.values()):
+                return self.send(409, {"message": "Shelf already exists: " + name})
+            new_id = max(list(shelves) + [9]) + 1
+            shelves[new_id] = {"id": new_id, "name": name, "icon": req.get("icon"), "iconType": req.get("iconType"), "userId": ME, "publicShelf": bool(req.get("publicShelf"))}
+            shelf_books[new_id] = set()
+            return self.send(201, shelf_dto(shelves[new_id]))
+        if path == "/api/v1/books/shelves":
+            req = json.loads(data or b"{}")
+            shelf_log.append(("POST", path, req))
+            for sid in list(req.get("shelvesToAssign", [])) + list(req.get("shelvesToUnassign", [])):
+                sh = shelves.get(sid)
+                if sh is None:
+                    return self.send(404, {"message": "Shelf not found"})
+                if sh["userId"] != ME:
+                    return self.send(403, {"message": "Forbidden"})
+            for sid in req.get("shelvesToAssign", []):
+                shelf_books[sid] |= set(req.get("bookIds", []))
+            for sid in req.get("shelvesToUnassign", []):
+                shelf_books[sid] -= set(req.get("bookIds", []))
+            return self.send(200, b"")
+        if path in ("/api/v1/reading-sessions", "/api/v1/annotations", "/api/v1/bookmarks"):
             return self.send(200, {"id": 1} if path.endswith(("annotations", "bookmarks")) else b"", "application/json")
         self.unknown()
 
@@ -367,6 +426,37 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(204)
         if path == "/api/v1/books/personal-rating":
             return self.send(200)
+        m = re.fullmatch(r"/api/v1/shelves/(\d+)", path)
+        if m:
+            req = json.loads(data or b"{}")
+            shelf_log.append(("PUT", path, req))
+            sh = shelves.get(int(m.group(1)))
+            if sh is None:
+                return self.send(404, {"message": "Shelf not found"})
+            if sh["userId"] != ME:
+                return self.send(403, {"message": "Forbidden"})
+            name = (req.get("name") or "").strip()
+            if not name:
+                return self.send(400, {"message": "Shelf name must not be empty."})
+            if any(o["userId"] == ME and o["id"] != sh["id"] and o["name"] == name for o in shelves.values()):
+                return self.send(409, {"message": "Shelf already exists: " + name})
+            sh.update(name=name, icon=req.get("icon"), iconType=req.get("iconType"), publicShelf=bool(req.get("publicShelf")))
+            return self.send(200, shelf_dto(sh))
+        self.unknown()
+
+    def do_DELETE(self):
+        path = urlparse(self.path).path
+        m = re.fullmatch(r"/api/v1/shelves/(\d+)", path)
+        if m:
+            shelf_log.append(("DELETE", path, None))
+            sh = shelves.get(int(m.group(1)))
+            if sh is None:
+                return self.send(404, {"message": "Shelf not found"})
+            if sh["userId"] != ME:
+                return self.send(403, {"message": "Forbidden"})
+            del shelves[sh["id"]]
+            shelf_books.pop(sh["id"], None)
+            return self.send(204)
         self.unknown()
 
     def do_GET(self):
@@ -393,7 +483,11 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/v1/public-settings":
             return self.send(200, {"oidcEnabled": False})
         if path == "/api/v1/app/books":
-            items = [] if q.get("shelfId") else list(BOOKS)  # the Favorites shelf is empty
+            if q.get("shelfId"):
+                sid = int(q["shelfId"][0])
+                items = [b for b in BOOKS if sid in shelves and b[0] in shelf_books.get(sid, ())]
+            else:
+                items = list(BOOKS)
             s = (q.get("search") or [""])[0].strip()
             if s:
                 items = [b for b in items if matches(b, s)]
@@ -461,10 +555,17 @@ class Handler(BaseHTTPRequestHandler):
         if m:
             name = unquote(m.group(1))
             return self.send(200, page([summary(b) for b in BOOKS if b[3] == name], q, 100))
+        if path == "/_debug/shelves":
+            return self.send(200, {"shelves": [shelf_dto(sh) | {"books": sorted(shelf_books[sh["id"]])} for sh in shelves.values()],
+                                   "log": [[m, p, b] for m, p, b in shelf_log]})
+        if path == "/_debug/reset-shelves":
+            reset_shelves()
+            return self.send(200, {"ok": True})
         if path in ("/api/v1/app/shelves",):
-            return self.send(200, [{"id": 7, "name": "Favorites", "bookCount": 0, "publicShelf": False}])
+            return self.send(200, [{"id": sh["id"], "name": sh["name"], "icon": sh["icon"], "bookCount": len(shelf_books[sh["id"]]), "publicShelf": sh["publicShelf"]} for sh in visible_shelves()])
         if path == "/api/v1/shelves":
-            return self.send(200, [{"id": 7, "name": "Favorites", "bookCount": 0, "publicShelf": False}])
+            shelf_log.append(("GET", path, None))
+            return self.send(200, [shelf_dto(sh) for sh in visible_shelves()])
         m = re.fullmatch(r"/api/v1/media/book/(\d+)/(cover|thumbnail)", path)
         if m:
             return self.send(200, png(int(m.group(1))), "image/png")

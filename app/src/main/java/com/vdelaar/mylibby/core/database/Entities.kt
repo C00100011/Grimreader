@@ -1,6 +1,7 @@
 package com.vdelaar.mylibby.core.database
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
@@ -37,6 +38,42 @@ data class BookEntity(
 data class FavouriteEntity(
     @PrimaryKey val bookId: Long,
     val addedAt: Long = System.currentTimeMillis(),
+)
+
+/**
+ * A shelf the reader made. It lives on the device; with Grimmory connected it is kept in step with the server's shelf
+ * ([remoteId]). [pending] says what still has to be sent: CREATE (not on the server yet), UPDATE (renamed) or DELETE
+ * (deleted here, hidden until the server has been told).
+ */
+@Entity(tableName = "shelves", indices = [Index("remoteId")])
+data class ShelfEntity(
+    @PrimaryKey(autoGenerate = true) val localId: Long = 0,
+    val remoteId: Long? = null,
+    val name: String,
+    val icon: String? = null,
+    val iconType: String? = null,
+    val publicShelf: Boolean = false,
+    /** Somebody else's public shelf on Grimmory: it can be read, not changed. */
+    val shared: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis(),
+    val pending: PendingAction = PendingAction.CREATE,
+)
+
+/**
+ * A book on a shelf. [bookId] is a Grimmory id or, for a book imported from the device, a negative id: those stay on
+ * the device. [pending]: CREATE = still to be put on the server's shelf, DELETE = still to be taken off (hidden meanwhile).
+ */
+@Entity(
+    tableName = "shelf_books",
+    primaryKeys = ["shelfId", "bookId"],
+    indices = [Index("bookId")],
+    foreignKeys = [ForeignKey(entity = ShelfEntity::class, parentColumns = ["localId"], childColumns = ["shelfId"], onDelete = ForeignKey.CASCADE)],
+)
+data class ShelfBookEntity(
+    val shelfId: Long,
+    val bookId: Long,
+    val addedAt: Long = System.currentTimeMillis(),
+    val pending: PendingAction = PendingAction.NONE,
 )
 
 enum class DownloadState { QUEUED, DOWNLOADING, DONE, FAILED }

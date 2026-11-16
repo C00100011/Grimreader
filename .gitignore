@@ -26,3 +26,8 @@ signing.properties
 /CHANGELOG.md
 *.sqlite
 *.sqlite-*
+
+# Play Store assets and signing material
+/playstore/
+*.pem
+/tools/kobo_sessions.py

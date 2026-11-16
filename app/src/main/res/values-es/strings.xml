@@ -493,6 +493,7 @@
     <string name="tab_lib_authors">Autores</string>
     <string name="tab_lib_books">Libros</string>
     <string name="tab_lib_series">Series</string>
+    <string name="tab_lib_shelves">Estantes</string>
     <string name="tab_profile">Perfil</string>
     <string name="tap_edges">Toca los bordes para pasar de página</string>
     <string name="text_size">Tamaño del texto</string>
@@ -709,7 +710,7 @@
     <string name="home_local_body">Importa un EPUB desde este dispositivo: toca el icono de archivo en Biblioteca o abre un archivo de libro con Grimreader.</string>
     <string name="my_data">Mis datos</string>
     <string name="export_data">Exportar mis datos</string>
-    <string name="export_data_body">Guarda en un archivo tus estadísticas de lectura, tu lista de lectura, tus favoritos, resaltados y marcadores.</string>
+    <string name="export_data_body">Guarda en un archivo tus estadísticas de lectura, tu lista de lectura, tus favoritos, estantes, resaltados y marcadores.</string>
     <string name="import_data">Importar datos</string>
     <string name="import_data_body">Añade datos de un archivo de exportación. No se sobrescribe nada de este dispositivo.</string>
     <string name="export_done">Exportación guardada</string>
@@ -719,7 +720,7 @@
     <string name="import_title">Importar datos</string>
     <string name="import_counts">%1$d sesiones de lectura · %2$d libros · %3$d favoritos · %4$d resaltados · %5$d marcadores</string>
     <string name="import_sync_q">¿Sincronizar esto también con Grimmory?</string>
-    <string name="import_sync_body">La sincronización envía a tu cuenta de Grimmory los favoritos, el estado de lectura, las valoraciones, el progreso, los resaltados y los marcadores importados. Si lo mantienes solo en este dispositivo, el servidor puede volver a reemplazar los favoritos y el estado de lectura de los libros de Grimmory en la próxima sincronización.</string>
+    <string name="import_sync_body">La sincronización envía a tu cuenta de Grimmory los favoritos, los estantes, el estado de lectura, las valoraciones, el progreso, los resaltados y los marcadores importados. Si lo mantienes solo en este dispositivo, el servidor puede volver a reemplazar los favoritos y el estado de lectura de los libros de Grimmory en la próxima sincronización.</string>
     <string name="import_sync_yes">Importar y sincronizar con Grimmory</string>
     <string name="import_sync_no">Importar solo a este dispositivo</string>
     <string name="import_apply">Importar</string>
@@ -1168,4 +1169,53 @@
     <string name="idle_multiplier_value">%1$.1f×</string>
     <string name="idle_prompt">Preguntar “¿Sigues leyendo?”</string>
     <string name="idle_prompt_body">Desactivado pausa en silencio; el siguiente cambio de página o toque continúa.</string>
+    <!-- Shelves -->
+    <string name="shelf_new">Nuevo estante</string>
+    <string name="shelf_name_label">Nombre del estante</string>
+    <string name="shelf_create">Crear</string>
+    <string name="shelf_rename">Renombrar estante</string>
+    <string name="shelf_rename_action">Renombrar</string>
+    <string name="shelf_delete">Eliminar estante</string>
+    <string name="shelf_delete_q">¿Eliminar este estante?</string>
+    <string name="shelf_delete_body">Se eliminará “%1$s”. Los libros siguen en tu biblioteca.</string>
+    <string name="shelf_delete_body_synced">Se eliminará “%1$s” aquí y en Grimmory. Los libros siguen en tu biblioteca.</string>
+    <string name="shelf_error_blank">Ponle un nombre al estante</string>
+    <string name="shelf_error_long">Usa como máximo %1$d caracteres</string>
+    <string name="shelf_error_reserved">Favoritos es un estante propio</string>
+    <string name="shelf_error_duplicate">Ya tienes un estante con este nombre</string>
+    <string name="shelves_empty_title">Crea tu primer estante</string>
+    <string name="shelves_empty_body">Agrupa los libros a tu manera, como “Lecturas de verano” o “Clásicos holandeses”. Abre un libro y toca Estantes, o selecciona libros en tu biblioteca y toca Añadir al estante.</string>
+    <string name="shelf_empty_title">Aún no hay nada en este estante</string>
+    <string name="shelf_empty_body">Abre un libro y toca Estantes, o selecciona libros en tu biblioteca y elige Añadir al estante.</string>
+    <string name="shelf_empty_favorites_body">Toca el corazón de un libro para ponerlo aquí.</string>
+    <string name="shelf_shared">Estante compartido · solo lectura</string>
+    <string name="shelf_synced">También en Grimmory</string>
+    <string name="shelves_none_found">No se encontraron estantes</string>
+    <string name="shelf_options">Opciones del estante</string>
+    <string name="shelf_pick">Elige un estante</string>
+    <string name="shelf_pick_body">Sus libros aparecen aquí.</string>
+    <string name="shelves_action">Estantes</string>
+    <string name="shelves_sheet_title">Añadir a estantes</string>
+    <string name="shelves_new_row">Nuevo estante…</string>
+    <string name="add_to_shelf">Añadir al estante</string>
+    <string name="remove_from_shelf">Quitar del estante</string>
+    <string name="sort_shelf_added">Añadido al estante</string>
+    <string name="sort_author_az">Autor A–Z</string>
+    <string name="shelf_created">Estante “%1$s” creado</string>
+    <string name="shelf_renamed">Renombrado a “%1$s”</string>
+    <string name="shelf_deleted">“%1$s” eliminado</string>
+    <string name="import_shelves_found">Estantes en el archivo: %1$s</string>
+    <string name="import_done_shelves">Se añadieron %1$s.</string>
+    <plurals name="added_to_shelf_n">
+        <item quantity="one">%1$d libro añadido a “%2$s”</item>
+        <item quantity="other">%1$d libros añadidos a “%2$s”</item>
+    </plurals>
+    <plurals name="removed_from_shelf_n">
+        <item quantity="one">%1$d libro quitado de “%2$s”</item>
+        <item quantity="other">%1$d libros quitados de “%2$s”</item>
+    </plurals>
+    <plurals name="shelves_count">
+        <item quantity="one">%1$d estante</item>
+        <item quantity="other">%1$d estantes</item>
+    </plurals>
 </resources>

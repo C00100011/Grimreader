@@ -50,7 +50,7 @@ Grimreader works with no account and no server: open your own EPUB files, or try
 - A home-screen **streak widget** (Jetpack Glance).
 
 ### Library
-- Library tab with filters, search, multi-select, favourites and a list-detail layout on large screens.
+- Library tab with filters, search, multi-select, favourites, your own shelves (on the device alone, or kept in step with Grimmory's) and a list-detail layout on large screens.
 - Downloads, "download all", covers kept on the device so the library looks the same offline.
 - **Import your own books** and open files straight from other apps ("Open with Grimreader").
 - Pull to refresh; with a server connected it also synchronises.
@@ -62,7 +62,7 @@ Grimreader works with no account and no server: open your own EPUB files, or try
 - Hold a word while reading to look it up, with the sentence it is in. It works offline with dictionaries you download in the app: [Wiktionary](https://www.wiktionary.org) per language (definitions, examples, synonyms and pronunciation, via [Kaikki.org](https://kaikki.org)) and [FreeDict](https://freedict.org) translations; lookups never leave the device (Settings → Dictionaries).
 
 ### Sync and integrations (all optional)
-- **Grimmory**: library, reading progress, reading sessions, favourites shelf and similar books. Two-way progress with a Kobo or KOReader: the furthest position wins, and the reader offers to jump when another device is further along.
+- **Grimmory**: library, reading progress, reading sessions, favourites, your own shelves (rename, delete and add books from the app; somebody else's public shelf is read-only) and similar books. Two-way progress with a Kobo or KOReader: the furthest position wins, and the reader offers to jump when another device is further along.
 - **OPDS catalogs**: browse any OPDS catalog and add books to your device.
 - **Book search** through a Shelfmark-compatible server, with login detection (password, OIDC or API key).
 - Libraries are checkboxes: use your server, an OPDS catalog and this device together.
@@ -166,7 +166,7 @@ Without those properties the fallbacks in `app/build.gradle.kts` apply.
 
 ### Try it without a real server
 
-`tools/mock-grimmory/server.py` is a small stand-in that implements what the app calls: a Grimmory-style login and catalogue, covers, EPUB downloads, an OPDS catalog (open at `/opds`, private at `/opds-private` with `reader` / `secret`), a bare-bones Shelfmark and a fake Hardcover GraphQL endpoint.
+`tools/mock-grimmory/server.py` is a small stand-in that implements what the app calls: a Grimmory-style login and catalogue, shelves (create, rename, delete, assign, a public shelf of another user; `GET /_debug/shelves` shows what the server holds), covers, EPUB downloads, an OPDS catalog (open at `/opds`, private at `/opds-private` with `reader` / `secret`), a bare-bones Shelfmark and a fake Hardcover GraphQL endpoint.
 
 ```bash
 python3 tools/mock-grimmory/server.py          # default port 8765
